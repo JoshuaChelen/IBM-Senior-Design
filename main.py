@@ -132,32 +132,37 @@ def test_data_conversion():
 
 
     elif method == 1:
-        queueing_networks = get_files_in_directory("./data/queueing-network")
+        system_description = get_files_in_directory("./data/system-description")
 
+
+        print("Choose a system description")
+        for i in range(len(system_description)):
+            print(f"{i} - {system_description[i]}")
+
+        choice = int(input())
+        system_description_name = system_description[choice]
+
+        system_description_path = (
+                project_root / "data" / "system-description" / system_description_name
+        ).resolve()
+
+        output = data_conversion.system_to_queue(str(system_description_path))
+        print(f"Converted system description {system_description_name} to {output}")
+
+    elif method == 2:
+        queueing_networks = get_files_in_directory("./data/queueing-network")
 
         print("Choose a queueing network")
         for i in range(len(queueing_networks)):
             print(f"{i} - {queueing_networks[i]}")
 
         choice = int(input())
-        queueing_network_name = queueing_networks[choice]
-
+        queueing_network = queueing_networks[choice]
         queueing_network_path = (
-                project_root / "data" / "queueing-network" / queueing_network_name
+                project_root / "data" / "queueing-network" / queueing_network
         ).resolve()
 
         output = data_conversion.queue_to_system(str(queueing_network_path))
-        print(f"Converted queueing network {queueing_network_name} to {output}")
-
-    elif method == 2:
-        queueing_networks = get_files_in_directory("./data/queueing-network")
-
-        print("Choose a system description")
-        for i in range(len(queueing_networks)):
-            print(f"{i} - {queueing_networks[i]}")
-
-        queueing_network = queueing_networks[int(input())]
-        output = data_conversion.system_to_queue(queueing_network)
 
         print(f"Converted queueing network {queueing_network} to {output}")
     else:

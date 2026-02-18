@@ -68,12 +68,11 @@ def system_to_queue(system_path: str) -> str:
         })
 
     result = {
-        "queue_network": {
+        "system": {
             "lambda": None,
             "beta": None,
             "entry_points": entry_id,
             "constraint": {
-                "entry_points": entry_id,
                 "service_rate_sum": 0.0
             },
             "queues": queues
@@ -103,7 +102,7 @@ def queue_to_system(queue_path: str) -> str:
     with open(queue_path) as f:
         queue_doc = json.load(f)
 
-    qn = queue_doc.get("queue_network", {})
+    qn = queue_doc.get("system", {})
     entry_id = qn.get("entry_points", "")
     queues = qn.get("queues", [])
 
