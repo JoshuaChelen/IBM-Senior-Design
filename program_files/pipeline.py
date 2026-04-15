@@ -1,0 +1,28 @@
+
+from user_input import UserInput
+import config, data_conversion, user_input, data_generator, analyzer, ollama_input
+from pathlib import Path
+
+def pipeline(system_description_file):
+    """
+    Run end to end from system description file to an analyzer result json. 
+
+    system_description_file - file name of system description (i.e., simple_system_description_example.json)
+    """
+
+    project_root = Path(__file__).resolve().parent.parent
+
+    system_description_path = (
+         project_root / "data" / "system-description" / system_description_file
+    ).resolve()
+
+    queue_network = data_conversion.system_to_queue(str(system_description_path))
+
+    print(f"Converted system description {system_description_path} to {queue_network}")
+
+    queue_data_name = data_generator.run(queue_network)
+
+    analyzer.run(queue_data_name)
+
+# Running function with an example 
+pipeline("simple_system_description_example.json")
