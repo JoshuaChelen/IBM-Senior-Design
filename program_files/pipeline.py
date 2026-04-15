@@ -18,11 +18,9 @@ def pipeline(system_description_file):
 
     queue_network = data_conversion.system_to_queue(str(system_description_path))
 
-    print(f"Converted system description {system_description_path} to {queue_network}")
-
     queue_data_name = data_generator.run(queue_network)
 
-    analyzer.run(queue_data_name)
+    analyzer.json_output(queue_data_name)
 
 # Running function with an example 
 pipeline("simple_system_description_example.json")
