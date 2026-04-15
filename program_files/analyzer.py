@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import config
 
+import json
+import time
+from pathlib import Path
+
 # --------------------------------------------------
 # Step 2: Define delay model with μ sum constraint
 # --------------------------------------------------
@@ -245,3 +249,122 @@ def run(csv_file_name:str):
     print("\n--- Maximum System Capacity ---")
     print(f"Maximum safe λ_main: {max_lambda:.4f}")
     print(f"System Bottleneck at Capacity: {bottleneck_queue}")
+
+
+
+def json_output(csv_file_name: str):
+    output = {
+        "status": "ok",
+        "result": {
+            "bottleneck": None, 
+            "max_lambda": None,
+            "mu_values": {},
+            "baseline": {
+                "lambdas": {},
+                "utilizations": {},
+                "bottleneck": None
+                },
+            "what_if": {
+                "scenario": None,
+                "lambdas": {}, 
+                "utilizations": {},
+                "bottleneck": None
+                }
+        }
+    }
+
+    cfg = config.get_config("dev_config.ini")
+    data_path = cfg.get("paths","processed_data_dir")+"/"+csv_file_name
+    df = pd.read_csv(data_path)
+
+    # Dynamically detect queues from CSV
+    queue_lambda_cols = [c for c in df.columns if c.startswith("queue_lambdas.")]
+    queue_delay_cols = [c for c in df.columns if c.startswith("delays.")]
+
+    queue_names = [c.split(".")[1] for c in queue_lambda_cols]
+    N = len(queue_names)
+
+    # Extract data dynamically
+    lambda_arrays = [df[f"queue_lambdas.{q}"].values for q in queue_names]
+    delay_arrays = [df[f"delays.{q}"].values for q in queue_names]
+
+    # Combine all queues' data
+    lambda_all = np.concatenate(lambda_arrays)
+    W_all = np.concatenate(delay_arrays)
+
+    queue_idx = np.concatenate([
+        np.full(len(df), i, dtype=int)
+        for i in range(N)
+    ])
+
+    p0 = [1.0] * N  # initial guess per queue
+
+    popt, _ = curve_fit(
+        combined_delay,
+        (lambda_all, queue_idx),
+        W_all,
+        p0=p0,
+        maxfev=20000
+    )
+
+    mu_est = popt  # CHANGED: no forced sum=1
+
+    output["result"]["mu_values"] = {queue_names[i]: mu_est[i] for i in range(N)}
+
+    # NEW: Define routing 
+    # Q1 -> Q2 -> Q3
+    routing = {
+        queue_names[0]: {queue_names[1]: 1.0} if N > 1 else {},
+        queue_names[1]: {queue_names[2]: 1.0} if N > 2 else {},
+        queue_names[2]: {} if N > 2 else {}
+    }
+
+
+    source_queue = queue_names[0]
+
+    lambda_main = df["lambda_main"].mean()
+
+    baseline = analyze_system(
+        lambda_main=lambda_main,
+        mu_dict=output["result"]["mu_values"],
+        routing=routing,
+        source_queue=source_queue
+    )
+
+    output["result"]["baseline"]["lambdas"] = {q: baseline["lambdas"][q] for q in baseline["rho"]}
+    output["result"]["baseline"]["utilizations"] = {q: baseline["rho"][q] for q in baseline["rho"]}
+    output["result"]["baseline"]["bottleneck"] = baseline['bottleneck']
+
+
+    # What-If Scenario (MVP)
+    # Increase λ_main by 20%
+    output["result"]["what_if"]["scenario"] = "Increase lambda_main by 20%"
+    lambda_main_new = lambda_main * 1.2
+
+    what_if = analyze_system(
+        lambda_main=lambda_main_new,
+        mu_dict=output["result"]["mu_values"],
+        routing=routing,
+        source_queue=source_queue
+    )
+
+    output["result"]["what_if"]["lambdas"] = {q: what_if["lambdas"][q] for q in what_if["rho"]}
+    output["result"]["what_if"]["utilizations"] = {q: what_if["rho"][q] for q in what_if["rho"]}
+    output["result"]["what_if"]["bottleneck"] = what_if["bottleneck"]
+
+    max_lambda, bottleneck_queue = find_max_capacity(
+        mu_dict=output["result"]["mu_values"],
+        routing=routing,
+        source_queue=source_queue
+    )
+    
+    output["result"]["max_lambda"] = max_lambda
+    output["result"]["bottleneck"] = bottleneck_queue
+
+    out_dir = Path("./data/results/")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    json_file_path = str(out_dir / (time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + ".json"))
+
+    # Write file
+    with open(json_file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(output, json_file, indent=2)
