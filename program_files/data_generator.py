@@ -184,7 +184,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
 
     for t in range(time):
         curr_time = t + 1
-        print(f"\nTime: {curr_time}")
+        # print(f"\nTime: {curr_time}")
 
         # Compute main lambda
         if curr_time == 1: 
@@ -195,7 +195,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
             curr_main_lambda = add_gaussian_noise(curr_main_lambda,gaussian_mean,gaussian_std)
             main_lambdas.append(curr_main_lambda)
 
-        print("λ_main =", curr_main_lambda)
+        # print("λ_main =", curr_main_lambda)
 
         # Compute queue lambdas (main λ + backlog)
         queue_lambdas = {}
@@ -210,7 +210,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
             q_id = q["id"]
             queue_lambdas[q_id] += backlog[q_id]
         
-        print("Queue λ values:", queue_lambdas)
+        # print("Queue λ values:", queue_lambdas)
 
         # Compute delays  
         delays = {}
@@ -235,10 +235,11 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
 
         backlog = new_backlog
 
+        """
         print("Delays:", delays)
         print("Served:", served)
         print("Backlog:", backlog)
-
+        """ 
         # Record timestep summary
         timeline.append({
             "time": curr_time,
