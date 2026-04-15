@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from jsonschema import Draft202012Validator
-from program_files import config
+import config
 
 
 def validate_json(data_path, schema_path) -> list:

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from program_files import config
+import config
 
 # --------------------------------------------------
 # Step 2: Define delay model with μ sum constraint
