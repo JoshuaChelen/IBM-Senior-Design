@@ -3,8 +3,8 @@ from ollama import ChatResponse
 import json
 import time
 import re
-from config import _project_root, get_config
-from data_conversion import validate_json
+from program_files.config import _project_root, get_config
+from program_files.data_conversion import validate_json
 from pathlib import Path
 
 def extract_json(response: str) -> str:
