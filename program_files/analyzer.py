@@ -252,7 +252,10 @@ def run(csv_file_name:str):
 
 
 
-def json_output(csv_file_name: str):
+def json_output(csv_file_name: str): 
+    """
+    Output analyzer result in a json format. Graph is also outputted (as a pop-up). 
+    """
     output = {
         "status": "ok",
         "result": {
@@ -310,6 +313,35 @@ def json_output(csv_file_name: str):
     mu_est = popt  # CHANGED: no forced sum=1
 
     output["result"]["mu_values"] = {queue_names[i]: mu_est[i] for i in range(N)}
+
+    # Plot graph 
+    plt.figure(figsize=(8, 5))
+
+    for i, q in enumerate(queue_names):
+        mask = queue_idx == i
+
+        plt.scatter(
+            lambda_all[mask],
+            W_all[mask],
+            label=f"{q} Data"
+        )
+
+        l_space = np.linspace(0, max(lambda_all[mask]) * 1.1, 200)
+        W_fit = 1.0 / (mu_est[i] - l_space)
+
+        plt.plot(
+            l_space,
+            W_fit,
+            linestyle="--",
+            label=f"{q} Fit"
+        )
+
+    plt.xlabel("λ (Arrival Rate)")
+    plt.ylabel("W (Delay)")
+    plt.title("Curve Fit for μ Estimation")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
     # NEW: Define routing 
     # Q1 -> Q2 -> Q3
