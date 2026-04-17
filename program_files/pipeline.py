@@ -20,7 +20,9 @@ def pipeline(system_description_file):
 
     queue_data_name = data_generator.run(queue_network)
 
-    analyzer.json_output(queue_data_name)
+    analyzer_json = analyzer.json_output(queue_data_name)
+
+    return analyzer_json
 
 # Running function with an example 
 pipeline("simple_system_description_example.json")
