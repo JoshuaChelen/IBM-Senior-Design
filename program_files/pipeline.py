@@ -25,4 +25,4 @@ def pipeline(system_description_file):
     return analyzer_json
 
 # Running function with an example 
-pipeline("simple_system_description_example.json")
+# pipeline("simple_system_description_example.json")
