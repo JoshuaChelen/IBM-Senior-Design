@@ -1,6 +1,6 @@
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
-from user_input import UserInput
+from program_files.user_input import UserInput
 from typing import List
 
 # ----------------------------
