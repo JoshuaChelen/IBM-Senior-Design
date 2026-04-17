@@ -1,6 +1,6 @@
 
-from user_input import UserInput
-import config, data_conversion, user_input, data_generator, analyzer, ollama_input
+from .user_input import UserInput
+from . import config, data_conversion, user_input, data_generator, analyzer, ollama_input
 from pathlib import Path
 
 def pipeline(system_description_file):
@@ -20,7 +20,9 @@ def pipeline(system_description_file):
 
     queue_data_name = data_generator.run(queue_network)
 
-    analyzer.json_output(queue_data_name)
+    analyzer_json = analyzer.json_output(queue_data_name)
+
+    return analyzer_json
 
 # Running function with an example 
 pipeline("simple_system_description_example.json")

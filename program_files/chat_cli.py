@@ -3,7 +3,7 @@ Main user interface for the terminal chatbot (connect to nlip_web if time permit
 - handles conversation, follow-ups, and what-if scenarios
 """
 
-from . import ollama_input, data_conversion, data_generator, analyzer, config, user_input
+from . import ollama_input, data_conversion, data_generator, analyzer, config, user_input, debug
 
 def conversation():
     print("""

@@ -368,3 +368,5 @@ def json_output(csv_file_name: str):
     # Write file
     with open(json_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(output, json_file, indent=2)
+
+    return output 
