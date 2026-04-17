@@ -1,4 +1,5 @@
-from program_files import config, data_conversion, user_input, data_generator, analyzer, ollama_input
+from .user_input import UserInput
+from . import config, data_conversion, user_input, data_generator, analyzer, ollama_input
 from pathlib import Path
 
 def print_new_section(title:str):
@@ -301,6 +302,3 @@ def debug():
         elif inp == "0":
             print_new_section("Exiting Program")
             break
-
-if __name__ == '__main__':
-    debug()
