@@ -20,13 +20,16 @@ def conversation():
         9. How the components are connected (call, read, write, etc.).
         10. How often the components are used (i.e. probablity of going to each component).
         11. Any other relevant information, such as system version.
-        \n
     """)
 
     system_description, system_description_path = ollama_input.ask_sys_desc()
 
     queue_network = data_conversion.system_to_queue(str(system_description_path))
 
+    print(f"Converted system description {system_description_path} to {queue_network}")
+
     queue_data_name = data_generator.run(queue_network)
 
-    analyzer.json_output(queue_data_name)
+    print(queue_data_name)
+
+    analyzer.run(queue_data_name)
