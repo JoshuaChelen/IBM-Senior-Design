@@ -6,6 +6,8 @@ Main user interface for the terminal chatbot (connect to nlip_web if time permit
 from pathlib import Path
 from . import ollama_input, pipeline
 
+# def follow_up_validation()
+
 def print_chat_message(speaker: str, message: str) -> None:
     """Prints a chat message to the terminal in a formatted way."""
     print(f"{speaker}: {message}")
