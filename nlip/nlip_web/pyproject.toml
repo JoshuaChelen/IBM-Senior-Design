@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "nlip-web"
+version = "0.1.0"
+description = ""
+authors = ["Dinesh Verma <dverma@us.ibm.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+nlip-server = {path = "../nlip_server", develop = true}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+chat = "scripts:start_chat"
+image = "scripts:start_image"
+

@@ -1,0 +1,37 @@
+{
+  "system_description": [
+    {
+      "id": "Q1",
+      "type": "service",
+      "machine": "Windows 10",
+      "description": "Sender and Receiver Validation",
+      "delay": 1.0,
+      "network_speed": null,
+      "messages": [
+        {
+          "input_type": null,
+          "output_type": null,
+          "message_size": null
+        }
+      ],
+      "edges": [{ "to": "Q2", "weight": 1.0 }]
+    },
+    {
+      "id": "Q2",
+      "type": "service",
+      "machine": "Windows 10",
+      "description": "Database",
+      "delay": 1.0,
+      "network_speed": null,
+      "messages": [
+        {
+          "input_type": null,
+          "output_type": null,
+          "message_size": null
+        }
+      ],
+      "edges": [{ "to": "Q3", "weight": 1.0 }]
+    }
+  ],
+  "metadata": [{ "system_version": "v1.0" }]
+}

@@ -6,7 +6,7 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "queue_network": {
+    "system": {
       "type": "object",
       "properties": {
         "lambda": {
@@ -29,7 +29,7 @@
               "description": "Sum constraint for all service rates"
             }
           },
-          "required": ["entry_points", "service_rate_sum"]
+          "required": ["service_rate_sum"]
         },
         "queues": {
           "type": "array",
@@ -72,5 +72,5 @@
       "required": ["entry_points", "constraint", "queues"]
     }
   },
-  "required": ["queue_network"]
+  "required": ["system"]
 }

@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from jsonschema import Draft202012Validator
-from program_files import config
+import program_files.config as config
 
 
 def validate_json(data_path, schema_path) -> list:
@@ -37,8 +37,18 @@ def system_to_queue(system_path: str) -> str:
 
     comps = system_doc.get("system_description", [])
 
+    # Collect all node IDs 
+    defined_ids = {c["id"] for c in comps}
+    referenced_ids = set()
+
+    for c in comps:
+        for e in c.get("edges", []):
+            referenced_ids.add(e.get("to"))
+
+    all_ids = defined_ids.union(referenced_ids)
+
     # Determine entry point
-    incoming = {c["id"]: 0 for c in comps}
+    incoming = {cid: 0 for cid in all_ids}
     for c in comps:
         for e in c.get("edges", []):
             incoming[e["to"]] = incoming.get(e["to"], 0) + 1
@@ -47,22 +57,35 @@ def system_to_queue(system_path: str) -> str:
     entry_id = entry_candidates[0] if entry_candidates else (comps[0]["id"] if comps else "")
 
     # Convert components to queue structures
+    comp_map = {c["id"]: c for c in comps}
     queues = []
-    for c in comps:
-        next_queue = []
-        for e in c.get("edges", []):
-            try:
-                prob = float(e.get("weight", 0)) * 100.0
-            except:
-                prob = 0.0
 
+    for qid in all_ids:
+        c = comp_map.get(qid, {})  # empty if not defined
+
+        next_queue = []
+        edges = c.get("edges", [])
+
+        if edges:
+            for e in edges:
+                try:
+                    prob = float(e.get("weight", 0)) * 100.0
+                except:
+                    prob = 0.0
+
+                next_queue.append({
+                    "id": e.get("to", ""),
+                    "probability": prob
+                })
+        else:
+            # Terminal node -> goes to External
             next_queue.append({
-                "id": e.get("to", ""),
-                "probability": prob
+                "id": "External",
+                "probability": 100.0
             })
 
         queues.append({
-            "id": c.get("id", ""),
+            "id": qid,
             "service_rate": None,
             "next_queue": next_queue
         })
@@ -73,7 +96,7 @@ def system_to_queue(system_path: str) -> str:
             "beta": None,
             "entry_points": entry_id,
             "constraint": {
-                "service_rate_sum": 0.0
+                "service_rate_sum": 1.0
             },
             "queues": queues
         }
@@ -148,4 +171,3 @@ def queue_to_system(queue_path: str) -> str:
         json.dump(result, f, indent=2)
 
     return str(out_path)
-

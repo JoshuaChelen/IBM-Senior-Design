@@ -1,7 +1,8 @@
 import json
 import numpy as np
 import pandas as pd
-from program_files import config
+import program_files.config as config
+from pathlib import Path
 
 """
 # Load Data Generation Configurations
@@ -183,7 +184,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
 
     for t in range(time):
         curr_time = t + 1
-        print(f"\nTime: {curr_time}")
+        # print(f"\nTime: {curr_time}")
 
         # Compute main lambda
         if curr_time == 1: 
@@ -194,7 +195,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
             curr_main_lambda = add_gaussian_noise(curr_main_lambda,gaussian_mean,gaussian_std)
             main_lambdas.append(curr_main_lambda)
 
-        print("λ_main =", curr_main_lambda)
+        # print("λ_main =", curr_main_lambda)
 
         # Compute queue lambdas (main λ + backlog)
         queue_lambdas = {}
@@ -209,7 +210,7 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
             q_id = q["id"]
             queue_lambdas[q_id] += backlog[q_id]
         
-        print("Queue λ values:", queue_lambdas)
+        # print("Queue λ values:", queue_lambdas)
 
         # Compute delays  
         delays = {}
@@ -234,10 +235,11 @@ def generate_data(queue_network: json, time, main_lambda, k, alpha, C, gaussian_
 
         backlog = new_backlog
 
+        """
         print("Delays:", delays)
         print("Served:", served)
         print("Backlog:", backlog)
-
+        """ 
         # Record timestep summary
         timeline.append({
             "time": curr_time,
@@ -261,7 +263,7 @@ def convert_data_to_csv(data, saved_file_path):
 
 
 
-def run():
+def run(QUEUE_NETWORK_FILE): # Feed in a queue network file
     # Load Data Generation Configurations
     cfg = config.get_config("dev_config.ini")
     data_gen_config = cfg['data_generation']
@@ -276,7 +278,7 @@ def run():
     GAUSSIAN_MEAN = data_gen_config.getfloat("gaussian_mean")
     GAUSSIAN_STD = data_gen_config.getfloat("gaussian_std")
     SEED = stress_test_config.getint("random_seed")
-    QUEUE_NETWORK_FILE = cfg.get("paths", "queueing_network_file")
+    # QUEUE_NETWORK_FILE = cfg.get("paths", "queueing_network_file") # Removed
 
     with open(QUEUE_NETWORK_FILE, 'r') as file:
         queue_network = json.load(file)
@@ -294,7 +296,11 @@ def run():
         GAUSSIAN_STD
     )
 
+    queue_file = Path(QUEUE_NETWORK_FILE) 
+    queue_name = queue_file.stem # e.g, "queue_diverge_example"
     out_dir = cfg.get("paths", "processed_data_dir")
-    out_path = out_dir+"/diverge_queue_data.csv"
+    out_path = Path(out_dir) / f"{queue_name}_data.csv"
     convert_data_to_csv(data, out_path)
     print("Saved to ",out_path)
+
+    return f"{queue_name}_data.csv"

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NLIP Image Description Client</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="body-container">
+    <div class="description-container ">
+      <h1>Image Description Page</h1>
+      <p>This is the main page for a image/text based interaction based on NLIP. </p>
+      <p>This interaction allows sending mixed text/images and expects text response.</p>
+    </div>
+    <div class="chat-container">
+      <div id="chat-box" class="chat-box"></div>
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your message..." required />
+        <label for="file-input" class="file-label">Attach File</label>
+        <input type="file" id="file-input" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    <ul id="file-list" class="file-list"></ul>
+  </div>
+  <script type="module" src="/static/image_script.js"></script>
+</body>
+</html>

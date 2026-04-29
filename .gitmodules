@@ -1,0 +1,6 @@
+[submodule "nlip/nlip_sdk"]
+	path = nlip/nlip_sdk
+	url = https://github.com/nlip-project/nlip_sdk
+[submodule "nlip/nlip_server"]
+	path = nlip/nlip_server
+	url = https://github.com/nlip-project/nlip_server

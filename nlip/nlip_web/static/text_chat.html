@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NLIP Text Chat Client</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="body-container">
+    <div class="description-container">
+      <h1> Web Interface for a NLIP Text Chat Bot</h1>
+      <p> This contains an interface for a text chat bot. 
+      </p>
+      <p>This site only contains a text based interaction with javascript client.</p>
+    </div>
+  <div class="chat-container">
+    <div id="chat-box" class="chat-box"></div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type your message..." required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  <script type="module" src="/static/chat_script.js"></script>
+</div>
+</body>
+</html>
