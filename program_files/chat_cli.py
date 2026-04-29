@@ -6,11 +6,34 @@ Main user interface for the terminal chatbot (connect to nlip_web if time permit
 from pathlib import Path
 from . import ollama_input, pipeline
 
-# def follow_up_validation()
-
 def print_chat_message(speaker: str, message: str) -> None:
     """Prints a chat message to the terminal in a formatted way."""
     print(f"{speaker}: {message}")
+
+def follow_up(system_desc: dict, validation_result: dict) -> None:
+    """
+    system_desc: original system description
+    validation_result: output from validation step, expected to include
+                       missing fields, gaps, or weaknesses
+    """
+
+    missing_info = validation_result.get("missing", [])
+    issues = validation_result.get("issues", [])
+
+    prompt = f"""
+    Given this system description:
+    {system_desc}
+
+    The validation step identified the following gaps:
+    Missing: {missing_info}
+    Issues: {issues}
+
+    Ask ONE concise follow-up question that would best help fill the most critical gap
+    for performance stress testing.
+    """
+
+    question = ollama_input.ask_followup(prompt)
+    print_chat_message("System", question)
 
 def chat_cli() -> None:
     """Main function to run the chat CLI."""

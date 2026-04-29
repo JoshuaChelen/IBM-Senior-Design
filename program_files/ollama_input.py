@@ -109,3 +109,18 @@ def ask_sys_desc():
     if (json_check):
         print("Exited due to too many retries of system description JSON creation...")
     return response, json_file_path
+
+def ask_follow_up(prompt: str) -> str:
+    print(prompt + "\n\nDo you want to ask a follow-up question? (y/n)")
+    choice = input()
+    if choice.lower() == "y":
+        question = input("Please enter your follow-up question: ")
+        time.sleep(1)
+        response: ChatResponse = chat(model="nlip-test-model", messages=[
+            {
+                'role': 'user',
+                'content': question
+            }
+        ])
+        return response['message']['content']
+    return ""
