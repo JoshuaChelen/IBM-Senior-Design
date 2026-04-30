@@ -28,12 +28,18 @@ def follow_up(system_desc: dict, validation_result: dict) -> None:
     Missing: {missing_info}
     Issues: {issues}
 
-    Ask ONE concise follow-up question that would best help fill the most critical gap
-    for performance stress testing.
+    Generate a follow-up question to ask the user that would help fill in the missing information or address the issues. 
+    The question should be clear and concise, and should directly relate to the gaps identified in the validation step.
     """
 
     question = ollama_input.ask_followup(prompt)
     print_chat_message("System", question)
+
+    answer = input("Input your answer to the follow-up question:\n")
+
+    updated_system_desc = ollama_input.handle_follow_up_answer(answer, question, system_desc, validation_result)
+    print_chat_message("System", "Thank you for your answer. I have updated the system description based on your input.")
+    print_chat_message("System", f"Updated System Description: {updated_system_desc}")
 
 def chat_cli() -> None:
     """Main function to run the chat CLI."""
