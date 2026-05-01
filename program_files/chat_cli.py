@@ -21,4 +21,13 @@ def chat_cli() -> None:
     print_chat_message("System", "Thank you for providing the system description. I will now analyze it and generate insights.")
 
     result = pipeline.pipeline(system_description_file)
-    print(result)
+
+    if result["status"] == "needs_clarification":
+        print_chat_message("System", "I need some more information before I can continue.")
+        print(result["context"])
+    elif result["status"] == "error":
+        print_chat_message("System", "I found an error when processing your system description:")
+        print(result["errors"])
+    else:
+        print_chat_message("System", "Here are the insights I generated based on your system description:")
+        print(result)
