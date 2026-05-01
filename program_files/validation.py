@@ -31,22 +31,24 @@ def apply_defaults(model: Dict[str, Any], assumptions: List[str]) -> None:
                 queue["next_queue"] = [{"id": EXTERNAL_NODE_ID, "probability": 100.0}]
                 assumptions.append(f"Queue '{queue['id']}' had no outgoing edges, so an External exit was added.")
     
-    # Apply default probabilities if missing (assume equal distribution)
+    # Apply default probabilities only when safe
     for queue in queues:
         next_queues = queue.get("next_queue", [])
 
         if not next_queues:
             continue
 
-        has_missing_prob = any("probability" not in nq for nq in next_queues)
-        total_prob = sum(nq.get("probability", 0) for nq in next_queues)
-        if has_missing_prob or total_prob == 0:
-            even_prob = 100.0 / len(next_queues)
-            
-            for next_queue in next_queues:
-                next_queue["probability"] = even_prob
-            
-            assumptions.append(f"Queue '{queue['id']}' had missing or zero probabilities, so equal probabilities of {even_prob}% were assigned to each outgoing edge.")
+        has_missing_prob = any(
+            "probability" not in nq or nq.get("probability") is None 
+            for nq in next_queues)
+        total_prob = sum(nq.get("probability", 0) or 0 for nq in next_queues)
+
+        # Safe default: only one outgoing edge
+        if len(next_queues) == 1 and (has_missing_prob or total_prob == 0):
+            next_queues[0]["probability"] = 100.0
+            assumptions.append(
+                f"Queue '{queue['id']}' had one outgoing edge, so probability was set to 100%."
+            )
 
 
 def validate(model: Dict[str, Any]) -> List[str]:
