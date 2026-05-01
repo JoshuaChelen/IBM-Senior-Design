@@ -98,6 +98,38 @@ def validate(model: Dict[str, Any]) -> List[str]:
         
     return errors
 
+def find_clarification_needed(doc: Dict[str, Any], model: Dict[str, Any], assumptions: List[str]) -> Dict[str, Any] | None:
+    """Return a clarification request if the model is missing info that cannot be safely defaulted, otherwise return None."""
+    queues = model.get("queues", [])
+
+    for queue in queues:
+        next_queues = queue.get("next_queue", [])
+
+        if len(next_queues) > 1:
+            continue
+
+        has_missing_prob = any(
+            "probability" not in nq or nq.get("probability") is None
+            for nq in next_queues)
+        
+        total_prob = sum(nq.get("probability", 0) or 0 for nq in next_queues)
+
+        if has_missing_prob and total_prob == 0:
+            targets = [nq.get("id") for nq in next_queues]
+
+            return {
+                "status": "needs_clarification",
+                "question_type": "routing_probabilities",
+                "context": {
+                    "queue_id": queue.get("id"),
+                    "targets": targets
+                },
+                "model": doc,
+                "assumptions": assumptions
+            }
+    return None
+
+
 def enforce(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Finds a model, validates it, and returns a dictionary with the status, assumptions, and errors."""
     assumptions: List[str] = []
@@ -107,6 +139,11 @@ def enforce(doc: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "errors": [str(e)]}
     apply_defaults(model, assumptions)
+
+    clarification = find_clarification_needed(doc, model, assumptions)
+    if clarification:
+        return clarification
+    
     errors = validate(model)
 
     if errors:
