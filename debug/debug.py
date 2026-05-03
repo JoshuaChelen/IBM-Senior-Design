@@ -1,5 +1,4 @@
-from .user_input import UserInput
-from . import config, data_conversion, user_input, data_generator, analyzer, ollama_input
+from backend import config, data_conversion, user_input, data_generator, analyzer, ollama_input, user_input
 from pathlib import Path
 
 def print_new_section(title:str):
