@@ -1,12 +1,3 @@
-"""NLIP-aware Ollama input helpers for the stress-test chatbot.
-
-All user/assistant/model boundaries in this module use NLIP_Message objects.
-For local development this module calls Ollama directly after extracting the
-text payload from the NLIP envelope. If NLIP_SERVER_URL is set, the NLIP JSON is
-POSTed to that endpoint instead, so the same CLI can be pointed at an NLIP
-server without changing the chat flow.
-"""
-
 from __future__ import annotations
 import json
 import os
