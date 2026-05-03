@@ -1,7 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
-import program_files.config as config
+import backend.config as config
 from pathlib import Path
 
 """
