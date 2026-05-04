@@ -184,9 +184,8 @@ def run(csv_file_name:str):
     # Q1 -> Q2 -> Q3
     # NEEDS TO BE DYNAMIC, SYSTEMS WITH 2 COMPONENTS OR LESS DON'T WORK AT THE MOMENT
     routing = {
-        queue_names[0]: {queue_names[1]: 1.0} if N > 1 else {},
-        queue_names[1]: {queue_names[2]: 1.0} if N > 2 else {},
-        queue_names[2]: {} if N > 2 else {}
+        queue_names[i]: ({queue_names[i + 1]: 1.0} if i < len(queue_names) - 1 else {})
+        for i in range(len(queue_names))
     }
 
     source_queue = queue_names[0]
@@ -344,11 +343,10 @@ def json_output(csv_file_name: str):
     plt.show()
 
     # NEW: Define routing 
-    # Q1 -> Q2 -> Q3
+    # Dynamic routing - works for any number of components
     routing = {
-        queue_names[0]: {queue_names[1]: 1.0} if N > 1 else {},
-        queue_names[1]: {queue_names[2]: 1.0} if N > 2 else {},
-        queue_names[2]: {} if N > 2 else {}
+        queue_names[i]: ({queue_names[i + 1]: 1.0} if i < len(queue_names) - 1 else {})
+        for i in range(len(queue_names))
     }
 
 
