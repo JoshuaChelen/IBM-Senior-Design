@@ -14,8 +14,7 @@ from .data_conversion import validate_json
 from nlip.nlip_sdk.nlip_sdk.nlip import NLIP_Factory, NLIP_Message
 
 DEFAULT_LANGUAGE = "english"
-DEFAULT_MODEL = "nlip-test-model"
-# DEFAULT_NLIP_ENDPOINT = "http://127.0.0.1:8000/nlip"
+DEFAULT_MODEL = "nlip-sys-desc"
 
 def new_conversation_token(prefix: str = "stress-test-cli") -> str:
     """Create an opaque NLIP conversation token for one CLI session."""
@@ -192,13 +191,12 @@ def apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
             else:
                 for msg in msgs:
                     if isinstance(msg, dict) and msg.get("message_size") in (None, ""):
-                        m["message_size"] = default_msg_size
+                        msg["message_size"] = default_msg_size
                 comp["messages"] = msgs
         else:
             comp["messages"] = {"message_size": default_msg_size} if default_msg_size is not None else {}
 
     return data
-
 
 def write_sys_desc_file(data: dict[str, Any], *, attempt: int = 0) -> str:
     """Write system description JSON to file and return file path."""
@@ -383,39 +381,19 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
 
     return last_response, last_json_file_path or ""
 
-def ask_follow_up(prompt: Union[str, NLIP_Message, dict[str, Any]], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
-    """Ask Ollama a follow-up prompt through an NLIP request/response exchange."""
-    if isinstance(prompt, NLIP_Message):
-        request_nlip = prompt
-    else:
-        request_nlip = NLIP_Factory.create_text(
-            nlip_to_text(prompt),
-            language=DEFAULT_LANGUAGE,
-            messagetype="Request",
-            label="user",
-        )
-        if conversation_token:
-            request_nlip.add_conversation_token(conversation_token, label="conversation")
-
-    response_nlip = send_message(request_nlip)
-    return response_nlip if return_nlip else nlip_to_text(response_nlip)
-
-def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], question: Union[str, NLIP_Message, dict[str, Any]], system_desc: dict[str, Any], validation_result: dict[str, Any], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
-    """Generate an updated system description based on the user's answer to the follow-up question."""
+def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], question: Union[str, NLIP_Message, dict[str, Any]], system_desc: dict[str, Any], analysis_result: dict[str, Any], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
+    """Generate a response based on what the user needs clarification on."""
     answer_text = nlip_to_text(answer)
     question_text = nlip_to_text(question)
 
     prompt = (
         f"System Description: {system_desc}\n"
-        f"Validation Result: {validation_result}\n"
+        f"Analysis Result: {analysis_result}\n"
         f"Follow-up Question: {question_text}\n"
         f"Follow-up Answer: {answer_text}\n\n"
-        "Based on the original system description, the validation results, and the user's answer to the "
-        "follow-up question, update the system description or validation results as needed. If the user's "
-        "answer provides new information that fills in missing details or addresses issues identified in the "
-        "validation step, incorporate that information into an updated system description or validation result. "
-        "If the user's answer does not provide new information or does not address the gaps identified in the "
-        "validation step, indicate that no updates are necessary. Return the updated result as JSON when possible."
+        "Based on the system description, the analysis results, and the user's answer to the "
+        "follow-up question, generate a response that addresses the user's query. "
+        "The response should provide clarification or additional information to help the user understand the analysis results better. "
     )
 
     request_nlip = NLIP_Factory.create_text(
@@ -427,5 +405,5 @@ def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], qu
     if conversation_token:
         request_nlip.add_conversation_token(conversation_token, label="conversation")
 
-    response_nlip = send_message(request_nlip)
+    response_nlip = send_message(request_nlip, model="nlip-follow-up")
     return response_nlip if return_nlip else nlip_to_text(response_nlip)

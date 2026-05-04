@@ -180,9 +180,8 @@ def run(csv_file_name:str):
     plt.grid(True)
     plt.show()
 
-    # NEW: Define routing 
-    # Q1 -> Q2 -> Q3
-    # NEEDS TO BE DYNAMIC, SYSTEMS WITH 2 COMPONENTS OR LESS DON'T WORK AT THE MOMENT
+    # Define routing 
+    # Q1 -> Q2 -> Q3 -> ... -> QN
     routing = {
         queue_names[i]: ({queue_names[i + 1]: 1.0} if i < len(queue_names) - 1 else {})
         for i in range(len(queue_names))

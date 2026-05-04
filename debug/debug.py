@@ -251,7 +251,7 @@ def test_user_input():
 
 def test_ollama_input():
     print_new_section("System Description (OLLAMA)")
-    print_new_section("PLEASE RUN BEFORE CONTINUING IF YOU HAVEN'T ALREADY:\n\tollama create nlip-test-model -f model/NLIP.Modelfile")
+    print_new_section("PLEASE RUN BEFORE CONTINUING IF YOU HAVEN'T ALREADY:\n\tollama create nlip-sys-desc -f model/NLIP-sys-desc.Modelfile\n\tollama create nlip-follow-up -f model/NLIP-follow-up.Modelfile")
     ollama_input.ask_sys_desc()
     print("System Description JSON Schema created in the 'data/system-description' folder!")
     print('\n')
