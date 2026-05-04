@@ -145,12 +145,22 @@ def chat_cli() -> None:
     status = result.get("status") if isinstance(result, dict) else None
 
     # TODO: Once validation is integrated, pipeline results should always include a status field.
-    if result[status] == "needs_clarification":
+    if result["status"] == "needs_clarification":
         print_chat_message("System", "I need some more information before I can continue.", conversation_token=conversation_token)
         print_chat_message("System", {"context": result.get("context")}, conversation_token=conversation_token)
-    elif result[status] == "error":
+    elif result["status"] == "error":
         print_chat_message("System", "I found an error when processing your system description:", conversation_token=conversation_token)
         print_chat_message("System", {"errors": result.get("errors")}, conversation_token=conversation_token)
     else:
         print_chat_message("System", "Here are the insights I generated based on your system description:", conversation_token=conversation_token)
         print_chat_message("System", result if isinstance(result, dict) else {"result": result}, conversation_token=conversation_token)
+
+    # Ask if the user needs any clarification on the results of the analysis.
+    print_chat_message("System", "Do you have any questions about the insights I provided, or is there anything you'd like me to clarify?", conversation_token=conversation_token)
+    user_response = get_user_response("Ask any questions/clarifications, or type 'no' to end the conversation:", conversation_token=conversation_token)
+
+    if user_response.strip().lower() != "no":
+        print_chat_message("System", "Sure, let's go through a follow-up question to clarify things.", conversation_token=conversation_token)
+        follow_up(system_desc=result.get("context", {}), validation_result=result.get("validation", {}), conversation_token=conversation_token)
+    else:
+        print_chat_message("System", "All files have been saved to the data folder and stress test analysis has completed, ending conversation...", conversation_token=conversation_token)

@@ -401,7 +401,7 @@ def ask_follow_up(prompt: Union[str, NLIP_Message, dict[str, Any]], *, conversat
     return response_nlip if return_nlip else nlip_to_text(response_nlip)
 
 def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], question: Union[str, NLIP_Message, dict[str, Any]], system_desc: dict[str, Any], validation_result: dict[str, Any], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
-    """Generate an updated system description based on the user's answer to the follow-up question."""
+    """Generate a response based on what the user needs clarification on."""
     answer_text = nlip_to_text(answer)
     question_text = nlip_to_text(question)
 
