@@ -48,7 +48,7 @@ def print_chat_message(speaker: str, message: Union[str, dict[str, Any], NLIP_Me
 
 def read_user_message(prompt: str, *, conversation_token: Optional[str] = None) -> NLIP_Message:
     """Read one user terminal response as an NLIP request message."""
-    return ollama_input.read_cli_message(prompt, conversation_token=conversation_token, label="user")
+    return ollama_input.get_user_response(prompt, conversation_token=conversation_token, label="user")
 
 
 def _extract_json_or_text_payload(message: Union[str, NLIP_Message]) -> Any:
