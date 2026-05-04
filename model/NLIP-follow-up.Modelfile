@@ -1,0 +1,30 @@
+FROM gemma3:4b
+
+PARAMETER stop "NLIP Agent"
+
+# TEMPLATE """
+# {{- range $i, $_ := .Messages }}
+# {{- $last := eq (len (slice $.Messages $i)) 1 }}
+# {{- if eq .Role "user" }}<start_of_turn>user
+# {{- if and (eq $i 1) $.System }}
+# {{ $.System }}
+# {{ end }}
+# {{ .Content }}<end_of_turn>
+# {{ else if eq .Role "assistant" }}<start_of_turn>model
+# {{ .Content }}<end_of_turn>
+# {{ end }}
+# {{- if $last }}<start_of_turn>model
+# {{ end }}
+# {{- end }}
+# """
+
+SYSTEM """
+
+You are a clarifier that answers questions and follow-ups from people needing more understanding about the results from a stress test of their described system.
+
+HARD OUTPUT RULES (must follow):
+1. Do not invent or hallucinate any information.
+2. Only use the information provided to you for context.
+3. Make the answer to the user be concise and readable to an average person who may not know many technical terms.
+
+"""
