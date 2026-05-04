@@ -1,9 +1,8 @@
 """
-Main NLIP-aware terminal interface for the performance stress testing chatbot.
+Command-line chat interface for the NLIP performance stress-testing chatbot.
 
-Every terminal/user/model interaction is wrapped in an NLIP_Message. The local
-pipeline still receives normal Python data, but all conversational I/O crosses an
-NLIP envelope before it is printed, read, or sent to Ollama/NLIP_SERVER_URL.
+This file handles user input, wraps chat messages as NLIP messages,
+runs the stress-testing pipeline, and prints results in the terminal.
 """
 
 from __future__ import annotations
@@ -17,8 +16,8 @@ from .data_conversion import validate_json
 from nlip.nlip_sdk.nlip_sdk.nlip import NLIP_Factory, NLIP_Message
 
 
-def _ensure_nlip_message(message: Union[str, dict[str, Any], NLIP_Message], *, speaker: str, conversation_token: Optional[str] = None) -> NLIP_Message:
-    """Convert display content into an NLIP message if it is not already one."""
+def ensure_nlip_message(message: Union[str, dict[str, Any], NLIP_Message], *, speaker: str, conversation_token: Optional[str] = None) -> NLIP_Message:
+    """Normalize a message into an NLIP message, adding a conversation token if provided."""
     if isinstance(message, NLIP_Message):
         return message
     if isinstance(message, dict):
@@ -41,7 +40,7 @@ def _ensure_nlip_message(message: Union[str, dict[str, Any], NLIP_Message], *, s
 
 def print_chat_message(speaker: str, message: Union[str, dict[str, Any], NLIP_Message], *, conversation_token: Optional[str] = None) -> NLIP_Message:
     """Print a chat message after wrapping it in NLIP."""
-    nlip_message = _ensure_nlip_message(message, speaker=speaker, conversation_token=conversation_token)
+    nlip_message = ensure_nlip_message(message, speaker=speaker, conversation_token=conversation_token)
     print(f"{speaker}: {ollama_input.nlip_to_text(nlip_message)}")
     return nlip_message
 
@@ -51,8 +50,8 @@ def read_user_message(prompt: str, *, conversation_token: Optional[str] = None) 
     return ollama_input.get_user_response(prompt, conversation_token=conversation_token, label="user")
 
 
-def _extract_json_or_text_payload(message: Union[str, NLIP_Message]) -> Any:
-    """Best-effort conversion of an NLIP/model reply into JSON data."""
+def extract_response_content(message: Union[str, NLIP_Message]) -> Any:
+    """Extract JSON content from an NLIP message if possible, otherwise return text."""
     text = ollama_input.nlip_to_text(message)
     extracted = ollama_input.extract_json(text)
     if extracted:
@@ -98,7 +97,7 @@ def follow_up(system_desc: dict[str, Any], validation_result: dict[str, Any], *,
         conversation_token=conversation_token,
         return_nlip=True,
     )
-    updated_data = _extract_json_or_text_payload(updated_nlip)
+    updated_data = extract_response_content(updated_nlip)
 
     out_dir = Path("./data/system-description/")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -128,7 +127,7 @@ def follow_up(system_desc: dict[str, Any], validation_result: dict[str, Any], *,
 
 def chat_cli() -> None:
     """Main function to run the chat CLI."""
-    conversation_token = ollama_input.new_conversation_token()
+    conversation_token = ollama_input.new_conversation_token() # Start a new conversation for this session
 
     print_chat_message("System", "Hi, I am your performance stress testing agent.", conversation_token=conversation_token)
     print_chat_message("System", "Please describe the system you want to analyze.", conversation_token=conversation_token)
