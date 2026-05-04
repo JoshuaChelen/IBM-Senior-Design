@@ -51,7 +51,7 @@ def read_user_message(prompt: str, *, conversation_token: Optional[str] = None) 
 
 
 def extract_response_content(message: Union[str, NLIP_Message]) -> Any:
-    """Extract JSON content from an NLIP message if possible, otherwise return text."""
+    """Extract JSON from a response when possible, otherwise return the response text."""
     text = ollama_input.nlip_to_text(message)
     extracted = ollama_input.extract_json(text)
     if extracted:
@@ -144,10 +144,11 @@ def chat_cli() -> None:
     result = pipeline.pipeline(system_description_file)
     status = result.get("status") if isinstance(result, dict) else None
 
-    if result["status"] == "needs_clarification":
+    # TODO: Once validation is integrated, pipeline results should always include a status field.
+    if result[status] == "needs_clarification":
         print_chat_message("System", "I need some more information before I can continue.", conversation_token=conversation_token)
         print_chat_message("System", {"context": result.get("context")}, conversation_token=conversation_token)
-    elif result["status"] == "error":
+    elif result[status] == "error":
         print_chat_message("System", "I found an error when processing your system description:", conversation_token=conversation_token)
         print_chat_message("System", {"errors": result.get("errors")}, conversation_token=conversation_token)
     else:
