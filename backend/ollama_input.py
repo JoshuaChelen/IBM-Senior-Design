@@ -1,12 +1,3 @@
-"""NLIP-aware Ollama input helpers for the stress-test chatbot.
-
-All user/assistant/model boundaries in this module use NLIP_Message objects.
-For local development this module calls Ollama directly after extracting the
-text payload from the NLIP envelope. If NLIP_SERVER_URL is set, the NLIP JSON is
-POSTed to that endpoint instead, so the same CLI can be pointed at an NLIP
-server without changing the chat flow.
-"""
-
 from __future__ import annotations
 import json
 import os
@@ -24,30 +15,19 @@ from nlip.nlip_sdk.nlip_sdk.nlip import NLIP_Factory, NLIP_Message
 
 DEFAULT_LANGUAGE = "english"
 DEFAULT_MODEL = "nlip-test-model"
-DEFAULT_NLIP_ENDPOINT = "http://127.0.0.1:8000/nlip"
-
+# DEFAULT_NLIP_ENDPOINT = "http://127.0.0.1:8000/nlip"
 
 def new_conversation_token(prefix: str = "stress-test-cli") -> str:
     """Create an opaque NLIP conversation token for one CLI session."""
     return f"{prefix}-{uuid.uuid4()}"
 
-
-def _message_format_value(value: Any) -> str:
-    """Return a lower-case format string from an enum/string value."""
-    return str(getattr(value, "value", value)).lower()
-
-
-def _parse_nlip_message(payload: Union[NLIP_Message, dict[str, Any], str]) -> NLIP_Message:
-    """Coerce NLIP JSON/dict/message input into NLIP_Message."""
-    if isinstance(payload, NLIP_Message):
-        return payload
-    if isinstance(payload, str):
-        payload = json.loads(payload)
-    try:
-        return NLIP_Message.model_validate(payload)
-    except AttributeError:  # pydantic v1 compatibility, if needed by older SDKs.
-        return NLIP_Message.parse_obj(payload)
-
+def text_to_nlip(message: Union[NLIP_Message, dict[str, Any], str]) -> NLIP_Message:
+    """Convert given input into NLIP message."""
+    if isinstance(message, NLIP_Message):
+        return message
+    if isinstance(message, str):
+        message = json.loads(message)
+    return NLIP_Message.model_validate(message)
 
 def nlip_to_text(message: Union[NLIP_Message, dict[str, Any], str, Any]) -> str:
     """Get just message content from an NLIP message."""
@@ -56,21 +36,20 @@ def nlip_to_text(message: Union[NLIP_Message, dict[str, Any], str, Any]) -> str:
 
     if isinstance(message, NLIP_Message) or isinstance(message, dict):
         try:
-            msg = _parse_nlip_message(message)
+            msg = text_to_nlip(message)
         except Exception:
             return json.dumps(message, indent=2) if isinstance(message, dict) else str(message)
 
         text = msg.extract_text(DEFAULT_LANGUAGE) or msg.extract_text(None)
         if text is not None:
             return text
-        if _message_format_value(msg.format) == "structured":
+        if str(getattr(msg.format, "value", msg.format)).lower() == "structured":
             return json.dumps(msg.content, indent=2)
         return str(msg.content)
     return str(message)
 
-
 def print_nlip_message(speaker: str, message: Union[NLIP_Message, str, dict[str, Any]]) -> NLIP_Message:
-    """Print an NLIP message to the terminal and return the NLIP envelope used."""
+    """Convert message into NLIP format in case it isn't already, print it to terminal, and return it."""
     if isinstance(message, NLIP_Message):
         msg = message
     elif isinstance(message, dict):
@@ -81,9 +60,8 @@ def print_nlip_message(speaker: str, message: Union[NLIP_Message, str, dict[str,
     print(f"{speaker}: {nlip_to_text(msg)}")
     return msg
 
-
-def read_cli_message(prompt: str, *, conversation_token: Optional[str] = None, label: str = "user") -> NLIP_Message:
-    """Prompt the user and return the response wrapped as an NLIP message."""
+def get_user_response(prompt: str, *, conversation_token: Optional[str] = None, label: str = "user") -> NLIP_Message:
+    """Prompt the user for a response and return it as an NLIP message."""
     prompt_msg = NLIP_Factory.create_text(
         prompt,
         language=DEFAULT_LANGUAGE,
@@ -93,10 +71,9 @@ def read_cli_message(prompt: str, *, conversation_token: Optional[str] = None, l
     if conversation_token:
         prompt_msg.add_conversation_token(conversation_token, label="conversation")
 
-    raw = input(f"{nlip_to_text(prompt_msg)}\n")
-
+    user_reply = input(f"{nlip_to_text(prompt_msg)}\n")
     user_msg = NLIP_Factory.create_text(
-        raw,
+        user_reply,
         language=DEFAULT_LANGUAGE,
         messagetype="Request",
         label=label,
@@ -106,16 +83,14 @@ def read_cli_message(prompt: str, *, conversation_token: Optional[str] = None, l
 
     return user_msg
 
-
-def _copy_token_submessages(source: NLIP_Message, target: NLIP_Message) -> None:
-    """Echo token submessages into a response, as NLIP requires for received tokens."""
+def copy_token_submessages(source: NLIP_Message, target: NLIP_Message) -> None:
+    """Copy token submessages from one NLIP message to another for conversation tracking."""
     for submsg in getattr(source, "submessages", None) or []:
-        if _message_format_value(submsg.format) == "token":
+        if str(getattr(submsg.format, "value", submsg.format)).lower() == "token":
             target.add_submessage(submsg)
 
-
-def _post_nlip_message(endpoint: str, request_message: NLIP_Message, *, timeout: int = 60) -> NLIP_Message:
-    """POST an NLIP JSON message to a configured NLIP HTTP endpoint."""
+def post_nlip_message(endpoint: str, request_message: NLIP_Message, *, timeout: int = 60) -> NLIP_Message:
+    """Send NLIP message to NLIP server endpoint."""
     body = json.dumps(request_message.to_dict()).encode("utf-8")
     request = Request(
         endpoint,
@@ -125,7 +100,7 @@ def _post_nlip_message(endpoint: str, request_message: NLIP_Message, *, timeout:
     )
     try:
         with urlopen(request, timeout=timeout) as response:
-            payload = response.read().decode("utf-8")
+            post = response.read().decode("utf-8")
     except URLError as exc:
         error_msg = NLIP_Factory.create_error_code(
             f"NLIP server request failed: {exc}",
@@ -136,54 +111,49 @@ def _post_nlip_message(endpoint: str, request_message: NLIP_Message, *, timeout:
         if conversation_token:
             error_msg.add_conversation_token(conversation_token, label="conversation")
         return error_msg
-    return _parse_nlip_message(payload)
+    return text_to_nlip(post)
 
-
-def _local_ollama_nlip_exchange(request_message: NLIP_Message, *, model: str = DEFAULT_MODEL) -> NLIP_Message:
-    """Local NLIP endpoint shim: NLIP in, Ollama call, NLIP out."""
+def local_ollama_response(request_message: NLIP_Message, *, model: str = DEFAULT_MODEL) -> NLIP_Message:
+    """Generate response from local Ollama model and convert to NLIP format."""
     prompt = nlip_to_text(request_message)
     response: ChatResponse = chat(
         model=model,
         messages=[{"role": "user", "content": prompt}],
     )
+
     response_message = NLIP_Factory.create_text(
         response["message"]["content"],
         language=DEFAULT_LANGUAGE,
         label="assistant",
         messagetype="Response",
     )
-    _copy_token_submessages(request_message, response_message)
+    copy_token_submessages(request_message, response_message)
     return response_message
 
-
-def exchange_nlip_message(request_message: Union[NLIP_Message, dict[str, Any], str], *, model: str = DEFAULT_MODEL) -> NLIP_Message:
-    """Send an NLIP request either to NLIP_SERVER_URL or to the local Ollama shim."""
-    nlip_request = _parse_nlip_message(request_message)
+def send_message(request_message: Union[NLIP_Message, dict[str, Any], str], *, model: str = DEFAULT_MODEL) -> NLIP_Message:
+    """Send an NLIP request either to NLIP server or local Ollama model."""
+    nlip_request = text_to_nlip(request_message)
 
     endpoint = os.getenv("NLIP_SERVER_URL", "").strip()
     if endpoint:
-        nlip_response = _post_nlip_message(endpoint, nlip_request)
+        nlip_response = post_nlip_message(endpoint, nlip_request)
     else:
-        nlip_response = _local_ollama_nlip_exchange(nlip_request, model=model)
+        nlip_response = local_ollama_response(nlip_request, model=model)
 
     return nlip_response
 
-
 def extract_json(response: str) -> Optional[str]:
-    """Extract the first JSON object or array from fenced or plain model output."""
+    """Extract JSON object from LLM response (used to extract system description)."""
     if not response:
         return None
 
-    fenced = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", response, re.IGNORECASE)
-    candidate = fenced.group(1) if fenced else response
+    search = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", response, re.IGNORECASE)
+    found = search.group(1) if search else response
+    json_object = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", found)
+    return json_object.group(1).strip() if json_object else None
 
-    # Prefer a full object/array payload, but tolerate explanatory text around it.
-    match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", candidate)
-    return match.group(1).strip() if match else None
-
-
-def _normalize_system_description_payload(parsed: Any) -> dict[str, Any]:
-    """Normalize model JSON into the expected {'system_description': [...]} shape when possible."""
+def shape_sys_desc(parsed: Any) -> dict[str, Any]:
+    """Format model JSON into the defined system description schema if needed."""
     if isinstance(parsed, list):
         return {"system_description": parsed}
     if isinstance(parsed, dict):
@@ -194,16 +164,12 @@ def _normalize_system_description_payload(parsed: Any) -> dict[str, Any]:
         return parsed
     return {"system_description": []}
 
-
-def _apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
-    """Fill nullable fields with configured defaults before schema validation."""
+def apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
+    """Fill unknown values in system description JSON with defaults from config where possible."""
     config = get_config("user_config.ini")
     comps = data.get("system_description") or []
 
-    try:
-        default_msg_size = config.getint("constraints", "avg_message_size_bytes")
-    except Exception:
-        default_msg_size = None
+    default_msg_size = config.getint("constraints", "avg_message_size_bytes")
 
     for comp in comps:
         if not isinstance(comp, dict):
@@ -224,8 +190,8 @@ def _apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
             if not msgs:
                 comp["messages"] = [{"message_size": default_msg_size}] if default_msg_size is not None else []
             else:
-                for m in msgs:
-                    if isinstance(m, dict) and m.get("message_size") in (None, ""):
+                for msg in msgs:
+                    if isinstance(msg, dict) and msg.get("message_size") in (None, ""):
                         m["message_size"] = default_msg_size
                 comp["messages"] = msgs
         else:
@@ -234,7 +200,8 @@ def _apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def _write_system_description_json(data: dict[str, Any], *, attempt: int = 0) -> str:
+def write_sys_desc_file(data: dict[str, Any], *, attempt: int = 0) -> str:
+    """Write system description JSON to file and return file path."""
     out_dir = Path("./data/system-description/")
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())}-{attempt}.json"
@@ -243,8 +210,8 @@ def _write_system_description_json(data: dict[str, Any], *, attempt: int = 0) ->
         json.dump(data, json_file, indent=2)
     return json_file_path
 
-
-def _validation_feedback(results: list[Any], raw_response: str) -> str:
+def validation_feedback(results: list[Any], raw_response: str) -> str:
+    """Return validation feedback to user based on schema validation results."""
     errors = "\n".join(str(result) for result in results) or "No schema errors were returned."
     return (
         "The previous generated JSON did not validate. Fix these exact schema errors and regenerate only valid JSON.\n"
@@ -252,8 +219,8 @@ def _validation_feedback(results: list[Any], raw_response: str) -> str:
         f"Previous model response:\n{raw_response[:4000]}"
     )
 
-
-def _build_generation_prompt(system_description: str, validation_feedback: Optional[str]) -> str:
+def validation_fail_response(system_description: str, validation_feedback: Optional[str]) -> str:
+    """Prompt for ollama to generate system description JSON in the event of validation errors."""
     if not validation_feedback:
         return system_description
     return (
@@ -261,7 +228,6 @@ def _build_generation_prompt(system_description: str, validation_feedback: Optio
         f"Validation feedback from the previous NLIP response:\n{validation_feedback}\n\n"
         "Regenerate the complete system description JSON. Return only JSON."
     )
-
 
 def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]] = None, *, conversation_token: Optional[str] = None) -> tuple[NLIP_Message, str]:
     """
@@ -272,7 +238,7 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
 
     if user_message is None:
         while True:
-            user_nlip = read_cli_message(
+            user_nlip = get_user_response(
                 "Input your system description (At least 10 words):",
                 conversation_token=conversation_token,
             )
@@ -299,7 +265,7 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
             )
             user_nlip.add_conversation_token(conversation_token, label="conversation")
         else:
-            user_nlip = _parse_nlip_message(user_message)
+            user_nlip = text_to_nlip(user_message)
         sys_desc = nlip_to_text(user_nlip).strip()
 
     json_check = True
@@ -325,7 +291,7 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
         print_nlip_message("System", status_msg)
         time.sleep(1)
 
-        generation_prompt = _build_generation_prompt(sys_desc, feedback)
+        generation_prompt = validation_fail_response(sys_desc, feedback)
         request_nlip = NLIP_Factory.create_text(
             generation_prompt,
             language=DEFAULT_LANGUAGE,
@@ -336,7 +302,7 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
         if feedback:
             request_nlip.add_text(feedback, language=DEFAULT_LANGUAGE, label="validation_feedback")
 
-        last_response = exchange_nlip_message(request_nlip)
+        last_response = send_message(request_nlip)
         raw_response = nlip_to_text(last_response)
         clean_output = extract_json(raw_response)
 
@@ -366,8 +332,8 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
             loop_count += 1
             continue
 
-        data = _apply_config_defaults(_normalize_system_description_payload(parsed))
-        last_json_file_path = _write_system_description_json(data, attempt=loop_count)
+        data = apply_config_defaults(shape_sys_desc(parsed))
+        last_json_file_path = write_sys_desc_file(data, attempt=loop_count)
 
         schema_path = _project_root() / "data" / "schemas" / "system_description.schema.json"
         results = validate_json(last_json_file_path, schema_path)
@@ -391,7 +357,7 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
                 )
                 error_msg.add_conversation_token(conversation_token, label="conversation")
                 print_nlip_message("System", error_msg)
-            feedback = _validation_feedback(results, raw_response)
+            feedback = validation_feedback(results, raw_response)
 
             retry_msg = NLIP_Factory.create_text(
                 "System Description JSON creation failed. Trying again with validation feedback...",
@@ -417,7 +383,6 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
 
     return last_response, last_json_file_path or ""
 
-
 def ask_follow_up(prompt: Union[str, NLIP_Message, dict[str, Any]], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
     """Ask Ollama a follow-up prompt through an NLIP request/response exchange."""
     if isinstance(prompt, NLIP_Message):
@@ -432,15 +397,14 @@ def ask_follow_up(prompt: Union[str, NLIP_Message, dict[str, Any]], *, conversat
         if conversation_token:
             request_nlip.add_conversation_token(conversation_token, label="conversation")
 
-    response_nlip = exchange_nlip_message(request_nlip)
+    response_nlip = send_message(request_nlip)
     return response_nlip if return_nlip else nlip_to_text(response_nlip)
 
-
-
 def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], question: Union[str, NLIP_Message, dict[str, Any]], system_desc: dict[str, Any], validation_result: dict[str, Any], *, conversation_token: Optional[str] = None, return_nlip: bool = False) -> Union[str, NLIP_Message]:
-    """Use a user's NLIP-wrapped follow-up answer to update validation context."""
+    """Generate an updated system description based on the user's answer to the follow-up question."""
     answer_text = nlip_to_text(answer)
     question_text = nlip_to_text(question)
+
     prompt = (
         f"System Description: {system_desc}\n"
         f"Validation Result: {validation_result}\n"
@@ -453,6 +417,7 @@ def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], qu
         "If the user's answer does not provide new information or does not address the gaps identified in the "
         "validation step, indicate that no updates are necessary. Return the updated result as JSON when possible."
     )
+
     request_nlip = NLIP_Factory.create_text(
         prompt,
         language=DEFAULT_LANGUAGE,
@@ -462,5 +427,5 @@ def handle_follow_up_answer(answer: Union[str, NLIP_Message, dict[str, Any]], qu
     if conversation_token:
         request_nlip.add_conversation_token(conversation_token, label="conversation")
 
-    response_nlip = exchange_nlip_message(request_nlip)
+    response_nlip = send_message(request_nlip)
     return response_nlip if return_nlip else nlip_to_text(response_nlip)

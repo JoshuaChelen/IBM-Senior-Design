@@ -182,12 +182,12 @@ def run(csv_file_name:str):
 
     # NEW: Define routing 
     # Q1 -> Q2 -> Q3
+    # NEEDS TO BE DYNAMIC, SYSTEMS WITH 2 COMPONENTS OR LESS DON'T WORK AT THE MOMENT
     routing = {
         queue_names[0]: {queue_names[1]: 1.0} if N > 1 else {},
         queue_names[1]: {queue_names[2]: 1.0} if N > 2 else {},
         queue_names[2]: {} if N > 2 else {}
     }
-
 
     source_queue = queue_names[0]
 
