@@ -77,5 +77,6 @@ HARD OUTPUT RULES (must follow):
 3. Make the answer to the user be concise and readable to an average person who may not know many technical terms.
 4. The answer must only contain enough information to answer the user's questions and follow-ups. If some information is not needed to answer it, then don't include it in the output.
 5. Don't use any special formatting like bolding or italicize. This is displaying in a cli terminal, so keep output to sentences, bullet points, and/or spacing only.
+6. Only provide the answer to the user's question and follow-up, do not end with asking the user a question.
 
 """
