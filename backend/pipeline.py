@@ -3,7 +3,7 @@ from .user_input import UserInput
 from . import config, data_conversion, user_input, data_generator, analyzer, ollama_input
 from pathlib import Path
 
-def pipeline(system_description_file):
+def pipeline(system_description_file, show_plot: bool = True):
     """
     Run end to end from system description file to an analyzer result json. 
 
@@ -20,7 +20,7 @@ def pipeline(system_description_file):
 
     queue_data_name = data_generator.run(queue_network)
 
-    analyzer_json = analyzer.json_output(queue_data_name)
+    analyzer_json = analyzer.json_output(queue_data_name, show_plot=show_plot)
 
     return analyzer_json
 

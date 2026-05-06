@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 # --------------------------------------------------
-# Step 2: Define delay model with μ sum constraint
+# Step 2: Define delay model with μ sum Q
 # --------------------------------------------------
 
 def combined_delay(lmbda_and_idx, *mu_params):
@@ -250,7 +250,7 @@ def run(csv_file_name:str):
 
 
 
-def json_output(csv_file_name: str): 
+def json_output(csv_file_name: str, show_plot: bool = True) -> dict: 
     """
     Output analyzer result in a json format. Graph is also outputted (as a pop-up). 
     """
@@ -339,7 +339,10 @@ def json_output(csv_file_name: str):
     plt.title("Curve Fit for μ Estimation")
     plt.legend()
     plt.grid(True)
-    plt.show()
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
     # NEW: Define routing 
     # Dynamic routing - works for any number of components
