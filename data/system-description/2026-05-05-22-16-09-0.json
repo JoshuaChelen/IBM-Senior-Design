@@ -1,0 +1,68 @@
+{
+  "system_description": [
+    {
+      "id": "rest_api_backend",
+      "type": "service",
+      "machine": "unknown",
+      "description": "REST API backend handling user authentication and product listings.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "react_frontend",
+          "weight": 0.8
+        },
+        {
+          "to": "postgres_database",
+          "weight": 0.2
+        }
+      ]
+    },
+    {
+      "id": "react_frontend",
+      "type": "service",
+      "machine": "unknown",
+      "description": "React frontend for user interaction and product display.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "rest_api_backend",
+          "weight": 0.9
+        }
+      ]
+    },
+    {
+      "id": "postgres_database",
+      "type": "database",
+      "machine": "unknown",
+      "description": "PostgreSQL database for storing product and user information.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "metadata": [
+    {
+      "system_version": "unknown"
+    },
+    {
+      "system_count": "unknown"
+    }
+  ]
+}

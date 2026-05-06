@@ -1,0 +1,39 @@
+{
+  "status": "ok",
+  "result": {
+    "bottleneck": "Flight Database",
+    "max_lambda": 0.18000000000000002,
+    "mu_values": {
+      "Flight Database": 0.18205877561639983,
+      "Flight Tracker Service": 0.4621290854465776,
+      "External Flight APIs": 0.3558121389370224
+    },
+    "baseline": {
+      "lambdas": {
+        "Flight Database": 0.13079752072307824,
+        "Flight Tracker Service": 0.13079752072307824,
+        "External Flight APIs": 0.13079752072307824
+      },
+      "utilizations": {
+        "Flight Database": 0.7184356825439181,
+        "Flight Tracker Service": 0.2830324358326901,
+        "External Flight APIs": 0.36760274990569947
+      },
+      "bottleneck": "Flight Database"
+    },
+    "what_if": {
+      "scenario": "Increase lambda_main by 20%",
+      "lambdas": {
+        "Flight Database": 0.1569570248676939,
+        "Flight Tracker Service": 0.1569570248676939,
+        "External Flight APIs": 0.1569570248676939
+      },
+      "utilizations": {
+        "Flight Database": 0.8621228190527017,
+        "Flight Tracker Service": 0.33963892299922815,
+        "External Flight APIs": 0.44112329988683935
+      },
+      "bottleneck": "Flight Database"
+    }
+  }
+}

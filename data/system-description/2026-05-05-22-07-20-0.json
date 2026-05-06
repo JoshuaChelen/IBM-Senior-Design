@@ -1,0 +1,54 @@
+{
+  "system_description": [
+    {
+      "id": "Flight Tracker Website",
+      "type": "service",
+      "machine": "unknown",
+      "description": "A website that tracks publicly listed flights.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "Flight Data Provider",
+          "weight": 0.7
+        },
+        {
+          "to": "User Interface",
+          "weight": 0.3
+        }
+      ]
+    },
+    {
+      "id": "Flight Data Provider",
+      "type": "database",
+      "machine": "unknown",
+      "description": "Provides real-time flight data.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "Flight Tracker Website",
+          "weight": 0.7
+        }
+      ]
+    }
+  ],
+  "metadata": [
+    {
+      "system_version": "unknown"
+    },
+    {
+      "system_count": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "system_description": [
+    {
+      "id": 1,
+      "name": "Music Transliteration Chrome Extension",
+      "network_speed": 1000,
+      "edges": 5,
+      "messages": [
+        {
+          "id": 1,
+          "name": "Extension Introduction",
+          "network_speed": 500,
+          "edges": 3,
+          "messages": [
+            {
+              "id": 1,
+              "name": "Concept Overview",
+              "network_speed": 200,
+              "edges": 2,
+              "messages": []
+            }
+          ],
+          "message_size": 512
+        },
+        {
+          "id": 2,
+          "name": "Feature Breakdown",
+          "network_speed": 500,
+          "edges": 3,
+          "messages": [
+            {
+              "id": 2,
+              "name": "Transliterated Lyrics Generation",
+              "network_speed": 200,
+              "edges": 2,
+              "messages": []
+            }
+          ],
+          "message_size": 512
+        }
+      ]
+    }
+  ]
+}

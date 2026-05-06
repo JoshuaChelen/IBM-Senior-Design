@@ -1,0 +1,42 @@
+{
+  "system": {
+    "lambda": null,
+    "beta": null,
+    "entry_points": "Flight API",
+    "constraint": {
+      "service_rate_sum": 1.0
+    },
+    "queues": [
+      {
+        "id": "Flight API",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "Postgres Database",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "Flight Tracker Website",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      }
+    ]
+  }
+}

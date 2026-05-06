@@ -1,0 +1,42 @@
+{
+  "system": {
+    "lambda": null,
+    "beta": null,
+    "entry_points": "database",
+    "constraint": {
+      "service_rate_sum": 1.0
+    },
+    "queues": [
+      {
+        "id": "frontend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "backend",
+            "probability": 20.0
+          }
+        ]
+      },
+      {
+        "id": "database",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "backend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "frontend",
+            "probability": 80.0
+          }
+        ]
+      }
+    ]
+  }
+}

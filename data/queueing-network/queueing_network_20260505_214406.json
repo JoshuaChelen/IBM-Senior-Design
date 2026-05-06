@@ -1,0 +1,56 @@
+{
+  "system": {
+    "lambda": null,
+    "beta": null,
+    "entry_points": "LectureSummarizerExtension",
+    "constraint": {
+      "service_rate_sum": 1.0
+    },
+    "queues": [
+      {
+        "id": "SpeechToText",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "Transcript",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "Transcript",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "LectureSummarizerExtension",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "SpeechToText",
+            "probability": 60.0
+          },
+          {
+            "id": "AISummarizer",
+            "probability": 40.0
+          }
+        ]
+      },
+      {
+        "id": "AISummarizer",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      }
+    ]
+  }
+}

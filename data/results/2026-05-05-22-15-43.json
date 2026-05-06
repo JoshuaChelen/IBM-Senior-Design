@@ -1,0 +1,39 @@
+{
+  "status": "ok",
+  "result": {
+    "bottleneck": "React Frontend",
+    "max_lambda": 0.18000000000000002,
+    "mu_values": {
+      "React Frontend": 0.1820587756163998,
+      "REST API Backend": 0.46212908544657766,
+      "PostgreSQL Database": 0.3558121389370224
+    },
+    "baseline": {
+      "lambdas": {
+        "React Frontend": 0.13079752072307824,
+        "REST API Backend": 0.13079752072307824,
+        "PostgreSQL Database": 0.13079752072307824
+      },
+      "utilizations": {
+        "React Frontend": 0.7184356825439182,
+        "REST API Backend": 0.28303243583269005,
+        "PostgreSQL Database": 0.36760274990569947
+      },
+      "bottleneck": "React Frontend"
+    },
+    "what_if": {
+      "scenario": "Increase lambda_main by 20%",
+      "lambdas": {
+        "React Frontend": 0.1569570248676939,
+        "REST API Backend": 0.1569570248676939,
+        "PostgreSQL Database": 0.1569570248676939
+      },
+      "utilizations": {
+        "React Frontend": 0.8621228190527018,
+        "REST API Backend": 0.3396389229992281,
+        "PostgreSQL Database": 0.44112329988683935
+      },
+      "bottleneck": "React Frontend"
+    }
+  }
+}

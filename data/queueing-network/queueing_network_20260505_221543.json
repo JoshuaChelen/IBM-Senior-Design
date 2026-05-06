@@ -1,0 +1,46 @@
+{
+  "system": {
+    "lambda": null,
+    "beta": null,
+    "entry_points": "REST API Backend",
+    "constraint": {
+      "service_rate_sum": 1.0
+    },
+    "queues": [
+      {
+        "id": "React Frontend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "REST API Backend",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "REST API Backend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "React Frontend",
+            "probability": 80.0
+          },
+          {
+            "id": "PostgreSQL Database",
+            "probability": 20.0
+          }
+        ]
+      },
+      {
+        "id": "PostgreSQL Database",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      }
+    ]
+  }
+}

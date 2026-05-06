@@ -1,0 +1,54 @@
+{
+  "system_description": [
+    {
+      "id": "Flight Tracker Website",
+      "type": "service",
+      "machine": "unknown",
+      "description": "A website that tracks publicly listed flights.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": []
+    },
+    {
+      "id": "Flight API",
+      "type": "service",
+      "machine": "unknown",
+      "description": "Fast API backend for flight data.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": []
+    },
+    {
+      "id": "Postgres Database",
+      "type": "database",
+      "machine": "unknown",
+      "description": "Database storing flight data.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "metadata": [
+    {
+      "system_version": "unknown"
+    },
+    {
+      "system_count": "unknown"
+    }
+  ]
+}

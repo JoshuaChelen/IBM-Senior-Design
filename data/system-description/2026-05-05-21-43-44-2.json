@@ -1,0 +1,73 @@
+{
+  "system_description": [
+    {
+      "id": "LectureSummarizerExtension",
+      "type": "service",
+      "machine": "unknown",
+      "description": "Chrome extension that creates AI summaries of lecture videos.",
+      "delay": null,
+      "network_speed": 100,
+      "messages": [
+        {
+          "input_type": "Video URL",
+          "output_type": "Transcript",
+          "message_size": 512
+        },
+        {
+          "input_type": "Transcript",
+          "output_type": "Summary",
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "SpeechToText",
+          "weight": 0.6
+        },
+        {
+          "to": "AISummarizer",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "id": "SpeechToText",
+      "type": "service",
+      "machine": "unknown",
+      "description": "Service for transcribing video to text.",
+      "delay": 1.2,
+      "network_speed": 90.0,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": [
+        {
+          "to": "Transcript",
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "AISummarizer",
+      "type": "service",
+      "machine": "unknown",
+      "description": "AI service for generating summaries.",
+      "delay": 2.5,
+      "network_speed": 85.7142857142857,
+      "messages": [
+        {
+          "message_size": 512
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "metadata": [
+    {
+      "system_version": "v1.0",
+      "system_count": "1"
+    }
+  ]
+}

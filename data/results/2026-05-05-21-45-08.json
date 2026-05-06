@@ -1,0 +1,44 @@
+{
+  "status": "ok",
+  "result": {
+    "bottleneck": "SpeechToText",
+    "max_lambda": 0.13999999999999999,
+    "mu_values": {
+      "SpeechToText": 0.14102155678723013,
+      "Transcript": 0.35796221767221853,
+      "LectureSummarizerExtension": 0.2756097946215847,
+      "AISummarizer": 0.2254064309189665
+    },
+    "baseline": {
+      "lambdas": {
+        "SpeechToText": 0.1273470387953426,
+        "Transcript": 0.1273470387953426,
+        "LectureSummarizerExtension": 0.1273470387953426,
+        "AISummarizer": 0.1273470387953426
+      },
+      "utilizations": {
+        "SpeechToText": 0.9030324277832267,
+        "Transcript": 0.35575553091458567,
+        "LectureSummarizerExtension": 0.4620555629025866,
+        "AISummarizer": 0.5649663067560117
+      },
+      "bottleneck": "SpeechToText"
+    },
+    "what_if": {
+      "scenario": "Increase lambda_main by 20%",
+      "lambdas": {
+        "SpeechToText": 0.1528164465544111,
+        "Transcript": 0.1528164465544111,
+        "LectureSummarizerExtension": 0.1528164465544111,
+        "AISummarizer": 0.1528164465544111
+      },
+      "utilizations": {
+        "SpeechToText": 1.0836389133398718,
+        "Transcript": 0.42690663709750276,
+        "LectureSummarizerExtension": 0.5544666754831038,
+        "AISummarizer": 0.677959568107214
+      },
+      "bottleneck": "SpeechToText"
+    }
+  }
+}

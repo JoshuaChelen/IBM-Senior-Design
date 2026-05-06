@@ -1,0 +1,39 @@
+{
+  "status": "ok",
+  "result": {
+    "bottleneck": "User Interface",
+    "max_lambda": 0.8000000000000005,
+    "mu_values": {
+      "Flight Tracker Website": 1.0013436053955678,
+      "Flight Data Provider": 0.8679949636644545,
+      "User Interface": 0.8044414423541533
+    },
+    "baseline": {
+      "lambdas": {
+        "Flight Tracker Website": 0.13079752072307824,
+        "Flight Data Provider": 0.13079752072307824,
+        "User Interface": 0.13079752072307824
+      },
+      "utilizations": {
+        "Flight Tracker Website": 0.13062201627722822,
+        "Flight Data Provider": 0.15068926226355542,
+        "User Interface": 0.16259420989091083
+      },
+      "bottleneck": "User Interface"
+    },
+    "what_if": {
+      "scenario": "Increase lambda_main by 20%",
+      "lambdas": {
+        "Flight Tracker Website": 0.1569570248676939,
+        "Flight Data Provider": 0.1569570248676939,
+        "User Interface": 0.1569570248676939
+      },
+      "utilizations": {
+        "Flight Tracker Website": 0.15674641953267385,
+        "Flight Data Provider": 0.1808271147162665,
+        "User Interface": 0.195113051869093
+      },
+      "bottleneck": "User Interface"
+    }
+  }
+}

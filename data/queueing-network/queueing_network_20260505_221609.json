@@ -1,0 +1,46 @@
+{
+  "system": {
+    "lambda": null,
+    "beta": null,
+    "entry_points": "rest_api_backend",
+    "constraint": {
+      "service_rate_sum": 1.0
+    },
+    "queues": [
+      {
+        "id": "react_frontend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "rest_api_backend",
+            "probability": 90.0
+          }
+        ]
+      },
+      {
+        "id": "postgres_database",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "External",
+            "probability": 100.0
+          }
+        ]
+      },
+      {
+        "id": "rest_api_backend",
+        "service_rate": null,
+        "next_queue": [
+          {
+            "id": "react_frontend",
+            "probability": 80.0
+          },
+          {
+            "id": "postgres_database",
+            "probability": 20.0
+          }
+        ]
+      }
+    ]
+  }
+}
