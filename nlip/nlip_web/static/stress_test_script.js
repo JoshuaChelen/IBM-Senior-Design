@@ -26,32 +26,50 @@ form.addEventListener('submit', async (e) => {
     // Build NLIP message with correlator if we have one
     const msg = NLIPFactory.createText(message);
     if (client.correlator != null) msg.addConversationToken(client.correlator);
-
     const raw = await client.send(msg);
-    const respMsg = NLIPFactory.createMessageFromJSON(raw);
-    client.correlator = respMsg.extractConversationToken();
+    console.log("RAW NLIP RESPONSE:", raw);
 
-    const text = respMsg.extractText();
+    let respMsg = null;
+    let text = '';
+    let submessages = [];
+
+    try {
+      respMsg = NLIPFactory.createMessageFromJSON(raw);
+      client.correlator = respMsg.extractConversationToken();
+      text = respMsg.extractText();
+      submessages = respMsg.submessages || [];
+    } catch (parseErr) {
+      console.warn("Could not parse response with NLIPFactory. Falling back to raw response.", parseErr);
+
+      text = raw?.content || raw?.message || raw?.response || JSON.stringify(raw, null, 2);
+      submessages = raw?.submessages || [];
+    }
 
     // Check for structured analysis_result submessage
-    const jsonSubmsg = (respMsg.submessages || []).find(
-      sm => sm.format === AllowedFormats.structured && sm.label === 'analysis_result'
+    const jsonSubmsg = submessages.find(
+      sm =>
+        (sm.format === AllowedFormats.structured || sm.format === 'structured') &&
+        sm.label === 'analysis_result'
     );
 
     if (jsonSubmsg) {
-      currentResult = jsonSubmsg.content;
-      sessionState  = 'AWAITING_FOLLOWUP';
+      currentResult =
+        typeof jsonSubmsg.content === 'string'
+          ? JSON.parse(jsonSubmsg.content)
+          : jsonSubmsg.content;
+
+      sessionState = 'AWAITING_FOLLOWUP';
       botBox.innerHTML = formatSummaryText(text);
       renderSidebar(currentResult);
       input.placeholder = "Ask a follow-up, or type 'no' to end…";
     } else {
-      botBox.textContent = text || 'No response';
+      botBox.innerHTML = formatSummaryText(text || 'No response');
     }
 
     updateBadge(sessionState);
 
   } catch (err) {
-    botBox.textContent = 'Error connecting to chat engine.';
+    botBox.textContent = 'Frontend error: $(err.message || err}';
     console.error(err);
   }
 

@@ -200,7 +200,7 @@ def apply_config_defaults(data: dict[str, Any]) -> dict[str, Any]:
 
 def write_sys_desc_file(data: dict[str, Any], *, attempt: int = 0) -> str:
     """Write system description JSON to file and return file path."""
-    out_dir = Path("./data/system-description/")
+    out_dir = _project_root() / "data" / "system-description"
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())}-{attempt}.json"
     json_file_path = str(out_dir / filename)
