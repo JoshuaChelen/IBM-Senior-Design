@@ -1,3 +1,18 @@
+"""
+ollama_input.py
+
+This file handles user input, wraps chat messages as NLIP messages,
+and manages the NLIP exchange to generate, validate, and save system description JSON files.
+
+The primary function is ask_sys_desc(), which prompts the user for a system description,
+guides the user through generating a valid system description JSON via an NLIP exchange,
+validates the JSON, and returns the final NLIP message and JSON file path.
+
+The secondary function is handle_follow_up_answer(), which takes a user's answer to a 
+follow-up question, the original system description, and the analysis results, and 
+generates a response to clarify the analysis based on the user's query.
+"""
+
 from __future__ import annotations
 import json
 import os
@@ -278,6 +293,10 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
     last_json_file_path: Optional[str] = None
     feedback: Optional[str] = None
 
+    """
+    Try generating system description JSON, validating it, and providing feedback up 
+    to 5 times before exiting with an error.
+    """
     while json_check and loop_count < 5:
         status_msg = NLIP_Factory.create_text(
             "Generating system description JSON in data/system-description folder...",
@@ -300,10 +319,17 @@ def ask_sys_desc(user_message: Optional[Union[NLIP_Message, dict[str, Any], str]
         if feedback:
             request_nlip.add_text(feedback, language=DEFAULT_LANGUAGE, label="validation_feedback")
 
-        last_response = send_message(request_nlip)
+        last_response = send_message(request_nlip) # This is where ollama repsonse is generated
         raw_response = nlip_to_text(last_response)
         clean_output = extract_json(raw_response)
 
+        """
+        From this point on, do a series of checks on the model response:
+            1. Check if any JSON was found in the response. If not, provide feedback and try again.
+            2. Try parsing the JSON. If it fails to parse, provide feedback with the error.
+            3. Validate the JSON against the schema. If it fails, provide feedback with the validation errors and try again.
+        If it passes all checks, write the JSON to a file and return the file path.
+        """
         if clean_output is None:
             feedback = "The model response did not contain a JSON object or array. Return only valid JSON."
             error_msg = NLIP_Factory.create_error_code(
