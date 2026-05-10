@@ -51,7 +51,7 @@ class OllamaClient(GenAI):
         url = f"http://{self.host}:{self.port}/api/{apicall}"
         data = kwargs
         data.update(priority_data)
-        resp = httpx.post(url, json=data, timeout=120.0)
+        resp = httpx.post(url, json=data, timeout=600.0)
         return resp.raise_for_status().json()
 
     def generate(self, prompt: str, **kwargs) -> str:
