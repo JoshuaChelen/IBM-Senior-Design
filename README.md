@@ -72,6 +72,70 @@ Run from root:
 
 ```
 
+## Project Structure
+
+```
+nlip-stress-testing-agent/
+├── backend/                 # Core stress-testing engine (pipeline + logic)
+│   ├── analyzer.py          # Bottleneck and performance analysis
+│   ├── chat_cli.py          # CLI interface for interacting with system
+│   ├── config.py            # Backend configuration settings
+│   ├── data_conversion.py   # Converts graphs ↔ queue network formats
+│   ├── data_generator.py    # Synthetic workload generation engine
+│   ├── ollama_input.py      # Interface to Ollama models (natural language → system description)
+│   ├── pipeline.py          # End-to-end execution pipeline
+│   ├── user_input.py        # Input parsing
+|
+├── config/                  # Global configs
+|
+├── data/
+│   ├── processed-data/     # Processed simulation outputs
+│   ├── queueing-network/   # Queue network JSON representations
+│   ├── results/            # Final analysis outputs
+│   ├── schemas/            # JSON schema definitions
+│   └── system-description/ # LLM-generated system JSON representations
+|
+├── debug/                 # Debug scripts (non-production)
+|
+├── model/                 # Ollama models
+|
+└── nlip/                  # NLIP framework integration layer
+    ├── nlip_sdk/          # SDK for NLIP protocol
+    ├── nlip_server/       # Backend NLIP server
+    └── nlip_web/          # Web UI layer (NLIP-powered frontend)
+        ├── nlip_web/
+        |   |   stress_test_chat.py  # Main chat-based stress test UI
+        │   └── ... (other nlip_web files)
+        ├── static/                  # Frontend assets (JS/HTML/CSS)
+        │   ├── stress_test.html
+        |   ├── stress_test_script.js
+        │   └── ... (other nlip_web files)
+        ├── tests/
+        └── website_modules/
+```
+
+## Architecture
+
+The system consists of six main components:
+
+1. UI: Simple interface that lets users describe their system in natural language and view the resulting queue model and analysis. Uses NLIP for all interaction.
+2. System Description: A structured JSON model created from Ollama LLM translation of the user-described system
+3. Queueing Network Description: A structured JSON model representing the application as queues and edges
+4. Data Generator: Generates synthetic traffic data from a queue network description
+5. Limit Predictor (Analyzer): Predict bottleneck queue and estimate the maximum workload the application can safely handle
+6. Queue Load Estimates (Analyzer): Estimate the load on each queue by analyzing the generated traffic data (CSV)
+
+### System Flow
+
+Natural Language → System Description → Queue Network Description → Simulation (Data Generator) → CSV Data → Bottleneck Analysis → Results UI
+
+## Limitations
+
+- Synthetic data generator may occasionally produce negative or unrealistic delays under extreme workloads.
+- Bottleneck predictions are heuristic-based and not validated against real production traces.
+
+## Future Work Recommendation
+
 ## Resources
 
 - [NLIP Documentation](https://nlip-project.org/#/)
