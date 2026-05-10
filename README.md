@@ -136,6 +136,10 @@ Natural Language → System Description → Queue Network Description → Simula
 
 ## Future Work Recommendation
 
+- Refine NLIP Protocol: Make the natural language pipeline smoother, more robust, and able to handle edge cases and ambiguous system descriptions.
+- Scale the Agent: Support extremely high load volumes and highly complex, real-world application architectures beyond current testing limits.
+- Real-World Deployment: Test the agent against actual production systems and validate how accurate and reliable the bottleneck predictions truly are.
+
 ## Resources
 
 - [NLIP Documentation](https://nlip-project.org/#/)
