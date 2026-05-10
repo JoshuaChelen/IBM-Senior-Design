@@ -1,24 +1,24 @@
-import { NLIPClient, NLIPFactory, AllowedFormats } from './nlip.js';
+import { NLIPClient, NLIPFactory, AllowedFormats } from "./nlip.js";
 
-const client   = new NLIPClient(window.location.origin);
-const form     = document.getElementById('chat-form');
-const input    = document.getElementById('user-input');
-const chatBox  = document.getElementById('chat-box');
-const sidebar  = document.getElementById('result-panel');
-const dlBtn    = document.getElementById('dl-btn');
-const badge    = document.getElementById('state-badge');
+const client = new NLIPClient(window.location.origin);
+const form = document.getElementById("chat-form");
+const input = document.getElementById("user-input");
+const chatBox = document.getElementById("chat-box");
+const sidebar = document.getElementById("result-panel");
+const dlBtn = document.getElementById("dl-btn");
+const badge = document.getElementById("state-badge");
 
 let currentResult = null;
-let sessionState  = 'AWAITING_DESCRIPTION';
+let sessionState = "AWAITING_DESCRIPTION";
 
 // ── Send ─────────────────────────────────────────────────────────────────────
-form.addEventListener('submit', async (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const message = input.value.trim();
   if (!message) return;
 
   appendUserBubble(message);
-  input.value = '';
+  input.value = "";
   setInputEnabled(false);
   const botBox = appendBotPlaceholder();
 
@@ -30,7 +30,7 @@ form.addEventListener('submit', async (e) => {
     console.log("RAW NLIP RESPONSE:", raw);
 
     let respMsg = null;
-    let text = '';
+    let text = "";
     let submessages = [];
 
     try {
@@ -39,37 +39,44 @@ form.addEventListener('submit', async (e) => {
       text = respMsg.extractText();
       submessages = respMsg.submessages || [];
     } catch (parseErr) {
-      console.warn("Could not parse response with NLIPFactory. Falling back to raw response.", parseErr);
+      console.warn(
+        "Could not parse response with NLIPFactory. Falling back to raw response.",
+        parseErr,
+      );
 
-      text = raw?.content || raw?.message || raw?.response || JSON.stringify(raw, null, 2);
+      text =
+        raw?.content ||
+        raw?.message ||
+        raw?.response ||
+        JSON.stringify(raw, null, 2);
       submessages = raw?.submessages || [];
     }
 
     // Check for structured analysis_result submessage
     const jsonSubmsg = submessages.find(
-      sm =>
-        (sm.format === AllowedFormats.structured || sm.format === 'structured') &&
-        sm.label === 'analysis_result'
+      (sm) =>
+        (sm.format === AllowedFormats.structured ||
+          sm.format === "structured") &&
+        sm.label === "analysis_result",
     );
 
     if (jsonSubmsg) {
       currentResult =
-        typeof jsonSubmsg.content === 'string'
+        typeof jsonSubmsg.content === "string"
           ? JSON.parse(jsonSubmsg.content)
           : jsonSubmsg.content;
 
-      sessionState = 'AWAITING_FOLLOWUP';
+      sessionState = "AWAITING_FOLLOWUP";
       botBox.innerHTML = formatSummaryText(text);
       renderSidebar(currentResult);
       input.placeholder = "Ask a follow-up, or type 'no' to end…";
     } else {
-      botBox.innerHTML = formatSummaryText(text || 'No response');
+      botBox.innerHTML = formatSummaryText(text || "No response");
     }
 
     updateBadge(sessionState);
-
   } catch (err) {
-    botBox.textContent = 'Frontend error: $(err.message || err}';
+    botBox.textContent = `Frontend error: ${err.message || err}`;
     console.error(err);
   }
 
@@ -79,10 +86,10 @@ form.addEventListener('submit', async (e) => {
 
 // ── DOM helpers ──────────────────────────────────────────────────────────────
 function appendUserBubble(text) {
-  const pair   = document.createElement('div');
-  pair.className = 'message-pair';
-  const bubble = document.createElement('div');
-  bubble.className = 'user-bubble';
+  const pair = document.createElement("div");
+  pair.className = "message-pair";
+  const bubble = document.createElement("div");
+  bubble.className = "user-bubble";
   bubble.textContent = text;
   pair.appendChild(bubble);
   chatBox.appendChild(pair);
@@ -90,10 +97,10 @@ function appendUserBubble(text) {
 }
 
 function appendBotPlaceholder() {
-  const pair = document.createElement('div');
-  pair.className = 'message-pair';
-  const box  = document.createElement('div');
-  box.className = 'bot-box';
+  const pair = document.createElement("div");
+  pair.className = "message-pair";
+  const box = document.createElement("div");
+  box.className = "bot-box";
   box.innerHTML = '<span class="typing">···</span>';
   pair.appendChild(box);
   chatBox.appendChild(pair);
@@ -102,17 +109,22 @@ function appendBotPlaceholder() {
 }
 
 function formatSummaryText(text) {
-  if (!text) return '';
+  if (!text) return "";
   return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>')
-    .replace(/(█+)(░+)/g,'<span class="bar-fill">$1</span><span class="bar-empty">$2</span>');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>")
+    .replace(
+      /(█+)(░+)/g,
+      '<span class="bar-fill">$1</span><span class="bar-empty">$2</span>',
+    );
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 function renderSidebar(result) {
   const r = result?.result || result || {};
-  sidebar.style.display = 'flex';
+  sidebar.style.display = "flex";
 
   let html = `<div class="panel-label">ANALYSIS SUMMARY</div>`;
 
@@ -148,12 +160,12 @@ function renderSidebar(result) {
   }
 
   sidebar.innerHTML = html;
-  dlBtn.style.display = 'block';
+  dlBtn.style.display = "block";
 }
 
 function utilBar(name, value) {
-  const pct   = Math.min(value * 100, 100);
-  const color = pct > 85 ? '#ff6b35' : pct > 60 ? '#ffd166' : '#06d6a0';
+  const pct = Math.min(value * 100, 100);
+  const color = pct > 85 ? "#ff6b35" : pct > 60 ? "#ffd166" : "#06d6a0";
   return `
     <div class="util-row">
       <span class="util-name" title="${name}">${name}</span>
@@ -165,11 +177,13 @@ function utilBar(name, value) {
 }
 
 // ── Download ──────────────────────────────────────────────────────────────────
-dlBtn.addEventListener('click', () => {
+dlBtn.addEventListener("click", () => {
   if (!currentResult) return;
-  const blob = new Blob([JSON.stringify(currentResult, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  const blob = new Blob([JSON.stringify(currentResult, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
   a.href = url;
   a.download = `stress-test-${Date.now()}.json`;
   a.click();
@@ -179,15 +193,19 @@ dlBtn.addEventListener('click', () => {
 // ── Misc ──────────────────────────────────────────────────────────────────────
 function setInputEnabled(on) {
   input.disabled = !on;
-  form.querySelector('button').disabled = !on;
+  form.querySelector("button").disabled = !on;
 }
 
 function updateBadge(state) {
-  badge.textContent = state.replace(/_/g, ' ');
-  badge.className   = 'state-badge ' + (state === 'AWAITING_FOLLOWUP' ? 'ready' : 'waiting');
+  badge.textContent = state.replace(/_/g, " ");
+  badge.className =
+    "state-badge " + (state === "AWAITING_FOLLOWUP" ? "ready" : "waiting");
 }
 
 // Shift+Enter = newline, Enter = submit
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
 });
