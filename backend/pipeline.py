@@ -1,6 +1,4 @@
-
-from .user_input import UserInput
-from . import config, data_conversion, user_input, data_generator, analyzer, ollama_input
+from . import data_conversion, data_generator, analyzer
 from pathlib import Path
 
 def pipeline(system_description_file, show_plot: bool = True):
