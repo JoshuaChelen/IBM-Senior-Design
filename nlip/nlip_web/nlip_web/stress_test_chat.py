@@ -1,14 +1,14 @@
+# AI-Generated Code — Claude Sonnet 4.6 (Anthropic, claude.ai)
+# Reviewed and tested by the development team.
+
 """
 stress_test_chat.py
 
 NLIP-based web server for the Performance Stress Testing Agent.
-Mirrors text_chat.py structure, using nlip_sdk + nlip_server.
+Subclasses SafeStatefulApplication and StatefulSession from nlip_server,
+following the same pattern as text_chat.py.
 
-Place at: E:/UD/498/IBM-Senior-Design/nlip/nlip_web/nlip_web/stress_test_chat.py
-
-Run from E:/UD/498/IBM-Senior-Design/nlip/nlip_web/ with:
-    poetry run python nlip_web/stress_test_chat.py
-    Access at http://localhost:8030
+Access at http://localhost:8030 after running run_web.bat / run_web.sh
 """
 
 import sys
@@ -16,11 +16,8 @@ import logging
 from pathlib import Path
 from enum import Enum
 
-# ---------------------------------------------------------------------------
-# Path setup — make backend/ importable from the project root
-# ---------------------------------------------------------------------------
+# Add project root to path so backend/ is importable
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-# nlip_web/nlip_web/stress_test_chat.py → .parent×4 = IBM-Senior-Design
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from nlip_server import server
@@ -37,8 +34,8 @@ logging.basicConfig(level=logging.INFO)
 # ---------------------------------------------------------------------------
 
 class State(str, Enum):
-    AWAITING_DESCRIPTION = "awaiting_description"
-    AWAITING_FOLLOWUP    = "awaiting_followup"
+    AWAITING_DESCRIPTION = "awaiting_description"  # waiting for user to describe their system
+    AWAITING_FOLLOWUP    = "awaiting_followup"      # pipeline complete, accepting follow-up questions
 
 
 # ---------------------------------------------------------------------------
@@ -46,17 +43,22 @@ class State(str, Enum):
 # ---------------------------------------------------------------------------
 
 class StressTestApplication(nlip_ext.SafeStatefulApplication):
+    """
+    NLIP application entry point. Creates and manages StressTestSession instances.
+    Reads LOCAL_PORT from environment (default: 8030).
+    """
     def __init__(self):
         super().__init__()
         self.local_port = read_digits("LOCAL_PORT", 8030)
 
     def create_stateful_session(self) -> server.NLIP_Session:
+        """Creates a new session and initialises its state data."""
         session = StressTestSession()
         session.set_correlator()
         self.store_session_data(session.get_correlator(), {
-            "state":  State.AWAITING_DESCRIPTION,
-            "result": None,
-            "system_description_file": None,
+            "state":                   State.AWAITING_DESCRIPTION,
+            "result":                  None,   # stores analyzer JSON after pipeline runs
+            "system_description_file": None,   # filename of generated system description JSON
         })
         return session
 
@@ -66,6 +68,11 @@ class StressTestApplication(nlip_ext.SafeStatefulApplication):
 # ---------------------------------------------------------------------------
 
 class StressTestSession(nlip_ext.StatefulSession):
+    """
+    Handles the two-turn conversation flow:
+      Turn 1 — user provides system description -> pipeline runs -> results returned
+      Turn 2+ — user asks follow-up questions -> LLM answers using analysis context
+    """
 
     def execute(self, msg: nlip.NLIP_Message) -> nlip.NLIP_Message:
         from backend import ollama_input, pipeline as pipeline_module
@@ -80,7 +87,7 @@ class StressTestSession(nlip_ext.StatefulSession):
 
         state = data["state"]
 
-        # ── Waiting for system description ────────────────────────────────
+        # ── Turn 1: system description -> run pipeline ────────────────────
         if state == State.AWAITING_DESCRIPTION:
             if len(text.split()) < 10:
                 return nlip.NLIP_Factory.create_text(
@@ -88,13 +95,15 @@ class StressTestSession(nlip_ext.StatefulSession):
                 )
 
             try:
-                logger.info("Running pipeline for session %s…", self.get_correlator()[:8])
+                logger.info("Running pipeline for session %s...", self.get_correlator()[:8])
 
+                # Convert natural language description to structured JSON via LLM
                 _, sys_desc_path = ollama_input.ask_sys_desc(
                     user_message=text,
                     conversation_token=self.get_correlator(),
                 )
 
+                # Run the full analysis pipeline
                 result = pipeline_module.pipeline(Path(sys_desc_path).name, show_plot=False)
 
                 data["result"] = result
@@ -109,6 +118,8 @@ class StressTestSession(nlip_ext.StatefulSession):
                     )
 
                 data["state"] = State.AWAITING_FOLLOWUP
+
+                # Return human-readable summary as text + full JSON as a structured submessage
                 summary = _build_summary(result)
                 response_msg = nlip.NLIP_Factory.create_text(summary)
                 response_msg.add_json(result, label="analysis_result")
@@ -119,7 +130,7 @@ class StressTestSession(nlip_ext.StatefulSession):
                 data["state"] = State.AWAITING_DESCRIPTION
                 return nlip.NLIP_Factory.create_text(f"Pipeline error: {str(e)}")
 
-        # ── Follow-up questions ───────────────────────────────────────────
+        # ── Turn 2+: follow-up questions ──────────────────────────────────
         elif state == State.AWAITING_FOLLOWUP:
             if text.strip().lower() == "no":
                 data["state"] = State.AWAITING_DESCRIPTION
@@ -128,6 +139,7 @@ class StressTestSession(nlip_ext.StatefulSession):
                 )
 
             try:
+                # Pass analysis result as context so LLM can answer accurately
                 response_text = ollama_input.handle_follow_up_answer(
                     answer=text,
                     question="What would you like to know about the analysis?",
@@ -149,7 +161,10 @@ class StressTestSession(nlip_ext.StatefulSession):
 # ---------------------------------------------------------------------------
 
 def _build_summary(result: dict) -> str:
-    """Convert analyzer JSON into a readable text summary."""
+    """
+    Converts analyzer JSON into a human-readable text summary displayed in the chat.
+    Includes bottleneck, max safe lambda, baseline utilization bars, and what-if results.
+    """
     if not isinstance(result, dict):
         return str(result)
 
@@ -162,14 +177,14 @@ def _build_summary(result: dict) -> str:
     if bottleneck:
         lines.append(f"Bottleneck:   {bottleneck}")
     if max_lambda is not None:
-        lines.append(f"Max safe λ:   {max_lambda:.4f}")
+        lines.append(f"Max safe lambda:   {max_lambda:.4f}")
 
     baseline_utils = r.get("baseline", {}).get("utilizations", {})
     if baseline_utils:
-        lines.append("\nBaseline utilization (ρ):")
+        lines.append("\nBaseline utilization (rho):")
         for q, v in baseline_utils.items():
             filled = int(v * 20)
-            bar = "█" * filled + "░" * (20 - filled)
+            bar = "#" * filled + "-" * (20 - filled)
             lines.append(f"  {q:20s} {bar} {v*100:.1f}%")
 
     what_if = r.get("what_if", {})
