@@ -3,6 +3,9 @@ Command-line chat interface for the NLIP performance stress-testing chatbot.
 
 This file handles user input, wraps chat messages as NLIP messages,
 runs the stress-testing pipeline, and prints results in the terminal.
+
+All NLIP-related functions were AI-Generated using ChatGPT-4.5.
+All AI-generated code was reviewed and tested by the development team.
 """
 
 from __future__ import annotations

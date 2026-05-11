@@ -11,6 +11,9 @@ validates the JSON, and returns the final NLIP message and JSON file path.
 The secondary function is handle_follow_up_answer(), which takes a user's answer to a 
 follow-up question, the original system description, and the analysis results, and 
 generates a response to clarify the analysis based on the user's query.
+
+All functions from 'new_conversation_token' to 'send_message' were AI-Generated using ChatGPT-4.5.
+All AI-generated code was reviewed and tested by the development team.
 """
 
 from __future__ import annotations
