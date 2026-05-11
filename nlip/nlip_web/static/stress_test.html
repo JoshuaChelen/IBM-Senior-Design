@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!-- AI-Generated Code — Claude Sonnet 4.6 (Anthropic, claude.ai) -->
+<!-- Reviewed and tested by the development team. -->
+<!--
+  stress_test.html
+  Frontend UI for the Performance Stress Testing Agent.
+  Served statically by stress_test_chat.py at http://localhost:8030
+
+  Features:
+    - Chat interface for system description input and follow-up questions
+    - Sidebar showing analysis summary with utilization bars (resizable via drag handle)
+    - Light/dark mode toggle (light default)
+    - Download button for raw analysis JSON
+  
+  Depends on:
+    - /static/stress_test_script.js  (NLIP client logic)
+    - /static/nlip.js                (NLIP protocol library, from nlip_web repo)
+-->
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
@@ -69,7 +86,7 @@
 
     .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
-    /* Theme toggle */
+    /* Theme toggle button */
     .theme-toggle {
       background: var(--surf2);
       border: 1px solid var(--border);
@@ -87,6 +104,7 @@
     .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
     .theme-icon { font-size: 12px; }
 
+    /* Session state badge — shows AWAITING DESCRIPTION or AWAITING FOLLOWUP */
     .state-badge {
       font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em;
       padding: 4px 10px; border-radius: 3px; text-transform: uppercase;
@@ -96,10 +114,10 @@
     .state-badge.waiting { color: var(--warn); border-color: var(--warn); animation: pulse 1.4s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-    /* Main layout */
+    /* Main layout: chat area + drag handle + sidebar */
     .workspace { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
-    /* Chat */
+    /* Chat area */
     .chat-area { display: flex; flex-direction: column; overflow: hidden; flex: 1; min-width: 300px; }
 
     #chat-box {
@@ -112,6 +130,7 @@
 
     .message-pair { display: flex; flex-direction: column; gap: 8px; }
 
+    /* User messages align right */
     .user-bubble {
       align-self: flex-end; max-width: 70%;
       background: var(--surf2); border: 1px solid var(--border);
@@ -120,6 +139,8 @@
       animation: fadeUp .2s ease both; user-select: text;
       transition: background .2s, border-color .2s;
     }
+
+    /* Agent messages align left with accent left border */
     .bot-box {
       align-self: flex-start; max-width: 85%;
       background: var(--surface); border: 1px solid var(--border);
@@ -136,7 +157,7 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
     .typing { color: var(--muted); letter-spacing: .3em; animation: pulse 1s infinite; }
 
-    /* Input */
+    /* Input bar */
     #chat-form {
       display: flex; gap: 10px; padding: 16px 24px;
       border-top: 1px solid var(--border); background: var(--surface);
@@ -162,14 +183,14 @@
     #chat-form button:disabled { opacity: .3; cursor: not-allowed; }
     #chat-form button:not(:disabled):hover { opacity: .8; }
 
-    /* Drag handle */
+    /* Draggable divider between chat and sidebar */
     #drag-handle {
       width: 5px; background: var(--handle);
       cursor: col-resize; flex-shrink: 0; transition: background .15s;
     }
     #drag-handle:hover, #drag-handle.dragging { background: var(--accent); }
 
-    /* Sidebar */
+    /* Sidebar — shows analysis summary after pipeline completes */
     aside {
       width: 300px; min-width: 180px; max-width: 600px;
       background: var(--surface); overflow-y: auto;
@@ -193,12 +214,14 @@
     .metric-val { font-size: 12px; font-family: 'IBM Plex Mono', monospace; text-align: right; }
     .metric-val.hot { color: var(--hot); }
 
+    /* Utilization bar rows */
     .util-row { display: grid; grid-template-columns: minmax(60px, 1fr) 80px 44px; gap: 6px; align-items: center; }
     .util-name { font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .util-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .util-fill  { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.22,1,.36,1); }
     .util-pct   { font-size: 10px; font-family: 'IBM Plex Mono', monospace; text-align: right; white-space: nowrap; }
 
+    /* Download button — hidden until analysis completes */
     #dl-btn {
       display: none; margin-top: 8px;
       font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em;
@@ -240,6 +263,7 @@
     </form>
   </div>
 
+  <!-- Drag handle — mouse drag resizes the sidebar -->
   <div id="drag-handle"></div>
 
   <aside id="sidebar">
@@ -248,6 +272,7 @@
       // metrics will appear<br>
       // here after analysis.
     </div>
+    <!-- Populated by renderSidebar() in stress_test_script.js -->
     <div id="result-panel"></div>
     <button id="dl-btn">&#x2193; Download JSON</button>
   </aside>
@@ -255,18 +280,18 @@
 
 <script type="module" src="/static/stress_test_script.js"></script>
 <script>
-  // Theme toggle
+  // Toggle between light and dark mode
   function toggleTheme() {
     const html  = document.documentElement;
     const icon  = document.getElementById('theme-icon');
     const label = document.getElementById('theme-label');
     const isDark = html.getAttribute('data-theme') === 'dark';
     html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    icon.innerHTML  = isDark ? '&#9790;' : '&#9728;';
+    icon.innerHTML    = isDark ? '&#9790;' : '&#9728;';
     label.textContent = isDark ? 'Dark' : 'Light';
   }
 
-  // Draggable sidebar
+  // Draggable sidebar resize
   const handle    = document.getElementById('drag-handle');
   const sidebar   = document.getElementById('sidebar');
   const workspace = document.querySelector('.workspace');
@@ -282,6 +307,7 @@
   document.addEventListener('mousemove', (e) => {
     if (!dragging) return;
     const rect = workspace.getBoundingClientRect();
+    // Clamp sidebar width between 180px and 600px
     sidebar.style.width = Math.max(180, Math.min(600, rect.right - e.clientX)) + 'px';
   });
 
