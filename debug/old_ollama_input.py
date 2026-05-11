@@ -109,3 +109,23 @@ def ask_sys_desc():
     if (json_check):
         print("Exited due to too many retries of system description JSON creation...")
     return response, json_file_path
+
+def ask_follow_up(prompt: str) -> str:
+    response: ChatResponse = chat(model="nlip-test-model", messages=[
+        {
+            'role': 'user',
+            'content': prompt
+        }
+    ])
+    return response['message']['content']
+
+def handle_follow_up_answer(answer: str, question: str, system_desc: dict, validation_result: dict) -> str:
+    print(f"Received follow-up answer: {answer}")
+    "Take answer to a follow-up question and uses it to update the system description or validation results."
+    response = chat(model="nlip-test-model", messages=[
+        {
+            'role': 'user',
+            'content': f"System Description: {system_desc}\nValidation Result: {validation_result}\nFollow-up Question: {question}\nFollow-up Answer: {answer}\n\nBased on the original system description, the validation results, and the user's answer to the follow-up question, update the system description or validation results as needed. If the user's answer provides new information that fills in missing details or addresses issues identified in the validation step, incorporate that information into an updated system description or validation result. If the user's answer does not provide new information or does not address the gaps identified in the validation step, indicate that no updates are necessary."
+        }
+    ])
+    return response['message']['content']

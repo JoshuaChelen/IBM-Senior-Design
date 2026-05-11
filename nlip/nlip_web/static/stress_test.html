@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PERF &mdash; Stress Test Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* Light mode (default) */
+    :root, [data-theme="light"] {
+      --bg:      #f4f5f7;
+      --surface: #ffffff;
+      --surf2:   #f0f1f3;
+      --border:  #dde1e7;
+      --accent:  #0072c6;
+      --hot:     #d94f00;
+      --warn:    #b45309;
+      --ok:      #0a7c59;
+      --text:    #1a1d23;
+      --muted:   #6b7280;
+      --handle:  #c8cdd6;
+    }
+
+    /* Dark mode */
+    [data-theme="dark"] {
+      --bg:      #0a0c0f;
+      --surface: #111418;
+      --surf2:   #181c22;
+      --border:  #252a32;
+      --accent:  #00d4ff;
+      --hot:     #ff6b35;
+      --warn:    #ffd166;
+      --ok:      #06d6a0;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --handle:  #252a32;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      transition: background .2s, color .2s;
+    }
+
+    /* Header */
+    header {
+      flex-shrink: 0;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      transition: background .2s, border-color .2s;
+    }
+    .logo { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: .2em; color: var(--accent); }
+    .logo span { color: var(--muted); }
+    .header-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+    /* Theme toggle */
+    .theme-toggle {
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color .2s, color .2s;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .theme-icon { font-size: 12px; }
+
+    .state-badge {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em;
+      padding: 4px 10px; border-radius: 3px; text-transform: uppercase;
+      border: 1px solid var(--border); color: var(--warn);
+    }
+    .state-badge.ready   { color: var(--ok);   border-color: var(--ok); }
+    .state-badge.waiting { color: var(--warn); border-color: var(--warn); animation: pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* Main layout */
+    .workspace { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+    /* Chat */
+    .chat-area { display: flex; flex-direction: column; overflow: hidden; flex: 1; min-width: 300px; }
+
+    #chat-box {
+      flex: 1; overflow-y: auto; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      scroll-behavior: smooth;
+    }
+    #chat-box::-webkit-scrollbar { width: 4px; }
+    #chat-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .message-pair { display: flex; flex-direction: column; gap: 8px; }
+
+    .user-bubble {
+      align-self: flex-end; max-width: 70%;
+      background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 6px 6px 2px 6px; padding: 10px 14px;
+      font-size: 14px; line-height: 1.5; word-break: break-word;
+      animation: fadeUp .2s ease both; user-select: text;
+      transition: background .2s, border-color .2s;
+    }
+    .bot-box {
+      align-self: flex-start; max-width: 85%;
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 2px 6px 6px 6px; padding: 12px 16px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7;
+      word-break: break-word;
+      animation: fadeUp .2s ease both; user-select: text;
+      transition: background .2s, border-color .2s;
+    }
+    .bot-box .bar-fill  { color: var(--ok); }
+    .bot-box .bar-empty { color: var(--border); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .typing { color: var(--muted); letter-spacing: .3em; animation: pulse 1s infinite; }
+
+    /* Input */
+    #chat-form {
+      display: flex; gap: 10px; padding: 16px 24px;
+      border-top: 1px solid var(--border); background: var(--surface);
+      flex-shrink: 0; transition: background .2s, border-color .2s;
+    }
+    #user-input {
+      flex: 1; background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text); font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px; padding: 10px 14px; outline: none; resize: none;
+      transition: border-color .2s, background .2s, color .2s;
+      user-select: text;
+    }
+    #user-input::placeholder { color: var(--muted); }
+    #user-input:focus { border-color: var(--accent); }
+    #chat-form button {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 0 20px; background: var(--accent); color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; transition: opacity .2s;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] #chat-form button { color: #0a0c0f; }
+    #chat-form button:disabled { opacity: .3; cursor: not-allowed; }
+    #chat-form button:not(:disabled):hover { opacity: .8; }
+
+    /* Drag handle */
+    #drag-handle {
+      width: 5px; background: var(--handle);
+      cursor: col-resize; flex-shrink: 0; transition: background .15s;
+    }
+    #drag-handle:hover, #drag-handle.dragging { background: var(--accent); }
+
+    /* Sidebar */
+    aside {
+      width: 300px; min-width: 180px; max-width: 600px;
+      background: var(--surface); overflow-y: auto;
+      padding: 20px 16px; display: flex; flex-direction: column; gap: 12px;
+      flex-shrink: 0; border-left: 1px solid var(--border);
+      transition: background .2s, border-color .2s;
+    }
+    aside::-webkit-scrollbar { width: 3px; }
+    aside::-webkit-scrollbar-thumb { background: var(--border); }
+
+    #result-panel { display: none; flex-direction: column; gap: 10px; }
+
+    .panel-label {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .18em;
+      color: var(--muted); text-transform: uppercase;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .panel-section { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--accent); margin-top: 4px; }
+    .metric-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .metric-key { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+    .metric-val { font-size: 12px; font-family: 'IBM Plex Mono', monospace; text-align: right; }
+    .metric-val.hot { color: var(--hot); }
+
+    .util-row { display: grid; grid-template-columns: minmax(60px, 1fr) 80px 44px; gap: 6px; align-items: center; }
+    .util-name { font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .util-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .util-fill  { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.22,1,.36,1); }
+    .util-pct   { font-size: 10px; font-family: 'IBM Plex Mono', monospace; text-align: right; white-space: nowrap; }
+
+    #dl-btn {
+      display: none; margin-top: 8px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em;
+      text-transform: uppercase; padding: 8px 12px;
+      background: transparent; border: 1px solid var(--accent);
+      color: var(--accent); border-radius: 4px; cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    #dl-btn:hover { background: var(--accent); color: #fff; }
+    [data-theme="dark"] #dl-btn:hover { color: #0a0c0f; }
+
+    .welcome-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PERF<span>/AGENT</span></div>
+  <div class="header-sub">Performance Stress Testing</div>
+  <div class="header-right">
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-icon" id="theme-icon">&#9790;</span>
+      <span id="theme-label">Dark</span>
+    </button>
+    <div class="state-badge waiting" id="state-badge">Awaiting Description</div>
+  </div>
+</header>
+
+<div class="workspace">
+  <div class="chat-area">
+    <div id="chat-box">
+      <div class="message-pair">
+        <div class="bot-box">// Session ready.<br>Describe the system you want to stress-test.<br>Use at least 10 words -- include components, connections, and load type.</div>
+      </div>
+    </div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Describe your system (at least 10 words)..." required autocomplete="off"/>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <div id="drag-handle"></div>
+
+  <aside id="sidebar">
+    <div class="welcome-hint">
+      // Results and utilization<br>
+      // metrics will appear<br>
+      // here after analysis.
+    </div>
+    <div id="result-panel"></div>
+    <button id="dl-btn">&#x2193; Download JSON</button>
+  </aside>
+</div>
+
+<script type="module" src="/static/stress_test_script.js"></script>
+<script>
+  // Theme toggle
+  function toggleTheme() {
+    const html  = document.documentElement;
+    const icon  = document.getElementById('theme-icon');
+    const label = document.getElementById('theme-label');
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    icon.innerHTML  = isDark ? '&#9790;' : '&#9728;';
+    label.textContent = isDark ? 'Dark' : 'Light';
+  }
+
+  // Draggable sidebar
+  const handle    = document.getElementById('drag-handle');
+  const sidebar   = document.getElementById('sidebar');
+  const workspace = document.querySelector('.workspace');
+  let dragging = false;
+
+  handle.addEventListener('mousedown', (e) => {
+    dragging = true;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const rect = workspace.getBoundingClientRect();
+    sidebar.style.width = Math.max(180, Math.min(600, rect.right - e.clientX)) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+  });
+</script>
+</body>
+</html>

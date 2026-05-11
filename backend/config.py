@@ -7,7 +7,7 @@ from typing import List
 # Helpers
 # ----------------------------
 def _project_root() -> Path:
-    """Absolute path to the project root (parent of program_files/)."""
+    """Absolute path to the project root (parent of backend/)."""
     return Path(__file__).resolve().parent.parent
 
 def _config_path(config_name: str) -> Path:

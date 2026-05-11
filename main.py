@@ -1,4 +1,5 @@
-from program_files import chat_cli, debug
+from backend import chat_cli
+from debug import debug
 from pathlib import Path
 
 # Use to toggle on and off DEBUG_MODE 
