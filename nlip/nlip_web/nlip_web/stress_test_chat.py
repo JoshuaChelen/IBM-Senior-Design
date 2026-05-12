@@ -184,7 +184,7 @@ def _build_summary(result: dict) -> str:
         lines.append("\nBaseline utilization (rho):")
         for q, v in baseline_utils.items():
             filled = int(v * 20)
-            bar = "#" * filled + "-" * (20 - filled)
+            bar = "█" * filled + "░" * (20 - filled)
             lines.append(f"  {q:20s} {bar} {v*100:.1f}%")
 
     what_if = r.get("what_if", {})
