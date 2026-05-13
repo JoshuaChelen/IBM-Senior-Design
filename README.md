@@ -67,7 +67,7 @@ Run from root:
 #### macOS
 
 ```bash
-.\run_web.sh
+./run_web.sh
 # Visit http://localhost:8030/
 
 ```
@@ -133,6 +133,7 @@ Natural Language → System Description → Queue Network Description → Simula
 
 - Synthetic data generator may occasionally produce negative or unrealistic delays under extreme workloads.
 - Bottleneck predictions are heuristic-based and not validated against real production traces.
+- Natural language inputs can be ambiguous, which may lead to incomplete or unrealistic stress-testing parameters/results
 
 ## Future Work Recommendation
 
@@ -142,6 +143,7 @@ Natural Language → System Description → Queue Network Description → Simula
 
 ## Resources
 
+- [DEMO](https://youtu.be/CgHVQkoBbA0)
 - [NLIP Documentation](https://nlip-project.org/#/)
 - NLIP Repository
   - [NLIP Web](https://github.com/nlip-project/nlip_web)

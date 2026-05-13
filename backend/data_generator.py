@@ -4,32 +4,10 @@ import pandas as pd
 import backend.config as config
 from pathlib import Path
 
-"""
-# Load Data Generation Configurations
-cfg = config.get_config("dev_config.ini")
-data_gen_config = cfg['data_generation']
-stress_test_config = cfg['stress_test_params']
-
-
-# Extract parameters
-ALPHA = data_gen_config.getfloat("alpha")
-K = data_gen_config.getint("k")
-C = data_gen_config.getfloat("C")
-STARTING_MAIN_LAMBDA = data_gen_config.getfloat("starting_main_lambda")
-TIME_POINTS = data_gen_config.getint("time_points")
-GAUSSIAN_MEAN = data_gen_config.getfloat("gaussian_mean")
-GAUSSIAN_STD = data_gen_config.getfloat("gaussian_std")
-SEED = stress_test_config.getint("random_seed")
-QUEUE_NETWORK_FILE = cfg.get("paths","queueing_network_file")
-
-with open(QUEUE_NETWORK_FILE, 'r') as file:
-    queue_network = json.load(file)
-"""
-
-
-
 
 """
+Data Generator: Generates synthetic data for a given queue network.
+
 Procedure: 
 1) Obtain a queue network graph.
 2) Generate random values for the service rate, but still satisfy 

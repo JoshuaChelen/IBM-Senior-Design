@@ -1,3 +1,8 @@
+"""
+User Input Module: Handles user input for configuring the stress-testing agent
+Not called in the pipeline, but useful for testing purposes.
+"""
+
 from pydantic import BaseModel, Field, DirectoryPath, field_validator, ConfigDict, ValidationError
 from typing import Annotated
 from pathlib import Path
