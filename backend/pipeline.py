@@ -21,6 +21,3 @@ def pipeline(system_description_file, show_plot: bool = True):
     analyzer_json = analyzer.json_output(queue_data_name, show_plot=show_plot)
 
     return analyzer_json
-
-# Running function with an example 
-# pipeline("simple_system_description_example.json")
