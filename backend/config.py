@@ -1,3 +1,7 @@
+"""
+Config Module: Handles loading and updating of config files in the /config directory.
+"""
+
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
 from .user_input import UserInput
