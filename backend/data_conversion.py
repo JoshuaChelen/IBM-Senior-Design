@@ -1,3 +1,7 @@
+'''
+Data conversion utilities for System Description JSON ↔ Queueing Network JSON.
+'''
+
 import json
 from datetime import datetime
 from pathlib import Path
